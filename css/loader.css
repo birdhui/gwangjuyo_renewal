@@ -1,0 +1,28 @@
+/* Sori loader: the cup fills with water inside its dotted outline while the site loads; the fill clears and the outline settles on the hero cup, then
+   leaves the way ORYZO's preloader does — the graphic fades, the background
+   wipes off on a soft diagonal from the lower left and the page beneath
+   comes into focus from a blur. */
+html.is-loading,html.is-loading body{overflow:hidden}
+.sori-loader{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;pointer-events:auto}
+.sori-loader.is-leaving{pointer-events:none}
+.sori-loader-bg{position:absolute;inset:0;background:#795d46}
+.sori-loader-veil{position:absolute;inset:0;-webkit-backdrop-filter:blur(var(--loader-blur,0px));backdrop-filter:blur(var(--loader-blur,0px));display:none}
+.sori-loader.is-leaving .sori-loader-veil{display:block}
+.sori-loader-graphic{position:relative;width:47.992svh;aspect-ratio:345.54/391.99;transform-origin:50% 50%;will-change:transform,opacity}
+.sori-loader .cup-graphic{display:block;width:100%;height:100%;overflow:visible}
+.sori-loader .guides,.sori-loader .guide-points,.sori-loader .handles{transition:none}
+@media(max-width:767px){.sori-loader-graphic{width:41.593svh}}
+/* Hero chrome waits for the reveal (ORYZO: header and hero UI from start 0.5s). */
+html.is-intro .site-header .brand,html.is-intro .site-nav,html.is-intro .menu-toggle,html.is-intro .hero-topline,html.is-intro .hero-copy,html.is-intro .hero-card,html.is-intro .hero-scroll,html.is-intro .hero-rail{filter:opacity(0);translate:0 18px}
+html.intro-run :is(.site-header .brand,.site-nav,.menu-toggle,.hero-topline,.hero-copy,.hero-card,.hero-scroll,.hero-rail){transition:filter .8s cubic-bezier(.22,1,.36,1) var(--intro-delay,0s),translate .9s cubic-bezier(.22,1,.36,1) var(--intro-delay,0s)}
+.site-header .brand{--intro-delay:0s}.site-nav,.menu-toggle{--intro-delay:.08s}.hero-topline{--intro-delay:.14s}.hero-copy{--intro-delay:.22s}.hero-card{--intro-delay:.3s}.hero-rail{--intro-delay:.34s}.hero-scroll{--intro-delay:.42s}
+@media(prefers-reduced-motion:reduce){html.is-intro .site-header .brand,html.is-intro .site-nav,html.is-intro .menu-toggle,html.is-intro .hero-topline,html.is-intro .hero-copy,html.is-intro .hero-card,html.is-intro .hero-scroll,html.is-intro .hero-rail{translate:none}}
+
+/* 등장 "뾰잉" (ORYZO preloader와 같은 값): 바깥 원 0.2s 뒤 0.5s, 안쪽 원 0.2s 뒤 0.7s, 20% → 100% back-out(1.70158).
+   cubic-bezier(.34,1.56,.64,1) = easeOutBack. transform 애니메이션이라 합성 스레드에서 돌아 로딩 중 메인 스레드가 바빠도 끊기지 않는다. */
+.sori-loader-graphic .slg-all,.sori-loader-graphic .slg-inner{position:absolute;inset:0;will-change:transform}
+.sori-loader-graphic .slg-all .cup-graphic{position:absolute;inset:0;width:100%;height:100%}
+.sori-loader-graphic .slg-all{transform-origin:50% 53%;animation:slg-pop .5s cubic-bezier(.34,1.56,.64,1) .2s both}
+.sori-loader-graphic .slg-inner{transform-origin:50.19% 48.47%;animation:slg-pop .7s cubic-bezier(.34,1.56,.64,1) .2s both}
+@keyframes slg-pop{from{transform:scale(.2)}to{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.sori-loader-graphic .slg-all,.sori-loader-graphic .slg-inner{animation:none}}

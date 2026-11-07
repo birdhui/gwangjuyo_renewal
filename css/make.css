@@ -1,0 +1,158 @@
+/* 만듦 — 흙과 불. 섹션은 스크롤 길이만 만들고, 장면은 화면에 고정된 채 서로 겹쳐 바뀐다. */
+.make{position:relative;z-index:1;color:#f5efe6;font-family:Pretendard,var(--font-ko),sans-serif;pointer-events:none}
+.make-clay{height:1080svh}
+.make-fire{height:760svh}
+.make-stage{position:fixed;inset:0;height:100svh;overflow:hidden;z-index:2;opacity:0;visibility:hidden;pointer-events:none}
+.make-clay .make-stage{opacity:var(--clay-o,0)}
+.make-fire .make-stage{opacity:var(--fire-o,0)}
+.make-stage.is-on{visibility:visible}
+.make-gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+#fire-gl{opacity:0;transition:opacity .8s ease}#fire-gl.ready{opacity:1}
+
+.beat{position:absolute;inset:0;visibility:hidden;pointer-events:none}
+.beat-title,.beat-tag,.beat-desc,.beat-no{position:absolute;margin:0}
+.beat-title{left:clamp(16px,4vw,64px);top:clamp(92px,15svh,150px);font-weight:700;font-size:clamp(38px,5.6vw,108px);line-height:.95;letter-spacing:-.045em;white-space:nowrap}
+.beat-tag{left:clamp(18px,4.2vw,68px);top:calc(clamp(92px,15svh,150px) + clamp(38px,5.6vw,108px) + .5em);font-weight:500;font-size:clamp(14px,1.55vw,28px);letter-spacing:-.02em;color:#d07a3c;white-space:nowrap}
+.beat-no{left:clamp(18px,4.2vw,68px);top:clamp(70px,11svh,110px);font-size:12px;font-weight:600;letter-spacing:.14em;color:rgba(245,239,230,.55);font-variant-numeric:tabular-nums}
+.bc{display:inline-block;will-change:transform,opacity,filter}
+.beat-desc{bottom:clamp(36px,11svh,120px);font-size:clamp(14px,1.25vw,24px);font-weight:600;line-height:1.38;letter-spacing:-.025em;text-shadow:0 1px 18px rgba(0,0,0,.45)}
+.beat-r .beat-desc{right:clamp(18px,4.2vw,68px);text-align:right}
+.beat-l .beat-desc{left:clamp(18px,4.2vw,68px);text-align:left}
+.dl{display:block;overflow:hidden;padding-bottom:.12em}
+.dl>span{display:block;will-change:transform,opacity}
+@media(max-width:767px){.beat-desc{left:18px;right:18px;text-align:left!important;bottom:7svh}.beat-title{top:88px}}
+@media(prefers-reduced-motion:reduce){.make-clay,.make-fire{height:400svh}}
+/* Keep the scroll rail visible while the wheel and kiln scenes are active. */
+body.make-live .hero-rail{opacity:1!important}
+.rewind-hud{position:absolute;left:50%;top:calc(50% + 21svh);transform:translateX(-50%);display:flex;align-items:center;gap:12px;color:rgba(245,239,230,.82);opacity:0;pointer-events:none}
+.rewind-hud-icon{width:22px;height:11px;animation:rewind-blink 1s steps(2,end) infinite}
+.rewind-hud-bar{display:block;width:clamp(90px,9vw,150px);height:1px;background:rgba(245,239,230,.22);overflow:hidden}
+.rewind-hud-bar>span{display:block;height:100%;background:#f5efe6;transform-origin:left center}
+@keyframes rewind-blink{50%{opacity:.35}}
+@media(prefers-reduced-motion:reduce){.rewind-hud{display:none}}
+
+#clay-gl{pointer-events:auto}
+.clay-hint{position:absolute;left:50%;bottom:9svh;transform:translateX(-50%);margin:0;font-size:13px;font-weight:500;letter-spacing:-.01em;color:rgba(245,239,230,.72);opacity:0;pointer-events:none;white-space:nowrap}
+.clay-hint::before{content:'';display:inline-block;width:6px;height:6px;margin-right:10px;border-radius:50%;background:#f5efe6;vertical-align:middle;animation:clay-hint 1.6s ease-in-out infinite}
+@keyframes clay-hint{50%{opacity:.25;transform:scale(.6)}}
+
+/* Hero rail: a dot and the vertical label "광주요-소리잔". */
+.hero-rail span{display:none!important}
+.hero-rail{flex-direction:column;justify-content:space-between;align-items:center;gap:0;padding-block:20px;padding-inline:12px;writing-mode:horizontal-tb;background:#f7ebd8;color:#171411;font-weight:700;line-height:1;letter-spacing:-.03em}
+.hero-rail,.hero-rail span{font-size:16px!important}
+.hero-rail::before{content:'';display:block;flex:none;width:8px;height:8px;border-radius:50%;background:currentColor;opacity:var(--rail-text-opacity,1)}
+.hero-rail::after{content:'광주요-소리잔';display:block;writing-mode:vertical-rl;text-orientation:sideways;white-space:nowrap;opacity:var(--rail-text-opacity,1)}
+
+/* ===== Large displays: the hero scales smoothly from 1440px up to 3840px (4K) =====
+   --k (set in glb-shim.js) is 1 up to 1440px wide and 2.667 at 3840px. Fixed-px sizes are
+   multiplied by it; vw-based clamps simply lose their old px cap. */
+:root{--k:1}
+@media(min-width:1441px){
+ :root{--header-height:calc(80px*var(--k))}
+ .site-header .brand{top:calc(clamp(59px,4.6vw,calc(88px*var(--k))) - var(--hero-shrink,0)*clamp(37px,2.9vw,calc(56px*var(--k))))}
+ .site-header .brand-image-window,.hero-topline{width:calc(max(300px,36vw)*(1 - var(--hero-shrink,0)) + max(96px,8vw)*var(--hero-shrink,0))}
+ .site-nav{right:calc(clamp(60px,5vw,calc(96px*var(--k))) + clamp(8px,.66vw,calc(13px*var(--k))));top:clamp(14px,1.43vw,calc(28px*var(--k)));gap:calc(24px*var(--k))}
+ .site-nav a{font-size:clamp(11px,.83vw,16px)!important;min-height:calc(32px*var(--k))}
+ .hero-topline{top:clamp(24px,2.7vw,calc(52px*var(--k)));font-size:clamp(11px,1.25vw,24px)!important}
+ .hero-copy{width:min(28vw,calc(540px*var(--k)))}
+ .hero-copy h1{font-size:clamp(20px,2.1vw,calc(40px*var(--k)))}
+ .hero-copy>p:last-child{max-width:calc(360px*var(--k));margin-top:calc(18px*var(--k));font-size:clamp(14px,1.25vw,calc(22px*var(--k)))}
+ .hero-card{bottom:clamp(24px,1.667vw,calc(32px*var(--k)));width:clamp(262px,18.56vw,calc(356px*var(--k)));height:clamp(304px,21.51vw,calc(413px*var(--k)));padding:clamp(18px,1.25vw,calc(24px*var(--k)));backdrop-filter:blur(calc(6px*var(--k)));-webkit-backdrop-filter:blur(calc(6px*var(--k)))}
+ .hero-card strong{font-size:clamp(25px,1.667vw,calc(40px*var(--k)))}
+ .hero-card>span:last-child{font-size:clamp(15px,1.04vw,calc(20px*var(--k)))}
+ .hero-card-rule{margin-bottom:calc(16px*var(--k))}
+ .hero-scroll{bottom:calc(22px*var(--k));font-size:calc(11px*var(--k));gap:calc(8px*var(--k));min-height:calc(44px*var(--k))}
+ .hero-scroll span{width:calc(25px*var(--k));height:calc(25px*var(--k))}
+ .hero-rail{width:calc(var(--rail-width,60px)*var(--k));height:calc(var(--rail-height,200px)*var(--k));padding:calc(18px*var(--k)) calc(12px*var(--k))}
+ .hero-rail,.hero-rail span{font-size:calc(16px*var(--k))!important}
+ .hero-rail{gap:0;padding-block:calc(20px*var(--k))}
+ .hero-rail::before{width:calc(8px*var(--k));height:calc(8px*var(--k))}
+ .hero-focus-left{max-width:calc(390px*var(--k))}
+ .hero-focus-left h2{max-width:calc(440px*var(--k));font-size:clamp(32px,3.333333vw,128px)}
+ .hero-focus-copy>p{max-width:calc(420px*var(--k));font-size:clamp(19px,1.98vw,calc(38px*var(--k)))}
+}
+
+/* ===== 물레 장면: 좌우 카피 + 바닥빛 (흙 → 가루 → 덩이 → 소리잔) ===== */
+#clay-gl{pointer-events:none}
+.make-clay .make-stage{background:#141110}
+.wc-floor{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse 44% 15% at 50% 79%,#3a312b 0%,transparent 100%)}
+.wc{position:absolute;inset:0;z-index:3;display:flex;align-items:center;pointer-events:none;visibility:hidden;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wc-a{justify-content:flex-end;padding-right:max(16px,9vw,env(safe-area-inset-right,0px))}
+.wc-a .wc-box{width:max-content;max-width:calc(100vw - 32px)}
+.wc-b{width:52vw;justify-content:flex-start;padding-left:max(16px,9vw,env(safe-area-inset-left,0px));padding-right:16px}
+.wc-b .wc-box{width:max-content;max-width:100%}
+.wc-box{display:flex;flex-direction:column;align-items:flex-start;max-width:clamp(320px,30vw,1180px);color:#fff;mix-blend-mode:difference}
+.wc-h{margin:0 0 clamp(14px,1.67vw,64px);font-weight:600;font-size:64px;line-height:.98;letter-spacing:-.05em;text-wrap:balance}
+.wc-h .wc-anim{display:flex;align-items:baseline;white-space:nowrap}
+.wc-h .wc-anim+.wc-anim{margin-top:.06em}
+/* 1920px: 28px; 2560px: 37.33px; 3840px: 56px. */
+.wc-sub{margin:0 0 clamp(12px,1.25vw,48px);font-weight:400;font-size:clamp(24px,1.458333333vw,56px);letter-spacing:-.025em;line-height:1.4}
+.wc-sub .wc-line{display:block;white-space:nowrap}
+.wc-rule{width:clamp(80px,11.7vw,448px);height:clamp(2px,.105vw,4px);background:#fff;opacity:.8;margin:0 0 clamp(14px,1.67vw,64px)}
+.wc-p{margin:0;font-weight:300;font-size:clamp(14px,1.04vw,40px);line-height:1.68;letter-spacing:-.012em;opacity:.9;word-break:keep-all}
+.wc-anim{will-change:transform,opacity,filter;transform-origin:0 50%}
+@media(max-width:1599px){.wc-h{font-size:48px}.wc-sub{font-size:24px}}
+@media(min-width:768px) and (max-width:1199px){.wc-a .wc-h{font-size:32px}}
+@media(max-width:767px){
+ .wc-h{font-size:32px}
+ .wc-sub{font-size:16px}
+ .wc{align-items:flex-end;padding-bottom:calc(9svh + env(safe-area-inset-bottom,0px))}
+ .wc-a,.wc-b{justify-content:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+ .wc-b{width:auto}
+ .wc-box{max-width:100%;align-items:center;text-align:center}
+ .wc-h .wc-anim{justify-content:center}
+}
+/* 가마(불) 장면은 비워 둔다 — 짧은 빈 스크롤만 남김 */
+@media(prefers-reduced-motion:no-preference){
+ .make-fire{height:140svh}
+ .make-fire .make-stage{display:none}
+}
+
+/* 시리즈 타이틀 72px·700 / 태그라인 20px·500 (1440px 기준, 화면 폭에 비례) */
+.series-title{font-size:clamp(36px,5vw,180px)!important;font-weight:700!important}
+.series-tagline{font-size:clamp(14px,1.388889vw,50px)!important;font-weight:500!important}
+@media(max-width:767px){.series-title{font-size:clamp(28px,8.2vw,40px)!important}.series-tagline{font-size:15px!important}}
+/* 시리즈 설명 카피(우리 도자기의 형태를 / 오늘의 식탁 위 잔으로. / 익숙하고도 새로운 소리잔.) 굵기 400 */
+html .series-desc-line,html .series-desc-line *{font-weight:400!important}
+/* rewind·물레 섹션 타이틀 굵기 700 */
+html .hero-focus-left h2,html .wc-h{font-weight:700!important}
+
+/* Tighter rail at 2560px, with more breathing room beside the label. */
+@media(min-width:2400px) and (max-width:2999px){.hero-rail{width:80px;height:280px;padding-inline:0}.hero-rail::before{width:8px;height:8px}}
+
+/* The expanded label is centered in the hero; the same rail narrows on scroll. */
+@media(min-width:768px){
+ html body .hero-rail{
+  width:calc(var(--rail-width,60px)*var(--k,1)*var(--rail-x-scale,1))!important;
+  height:calc(var(--rail-height,200px)*var(--k,1)*var(--rail-y-scale,1))!important;
+  padding:calc(var(--rail-padding-y,20px)*var(--k,1)) 0!important;
+  justify-content:center!important;
+  gap:var(--rail-gap,24px)!important;
+  transition:width .18s ease,padding .18s ease,opacity .4s ease!important;
+ }
+}
+@media(min-width:1800px) and (max-width:2399px){html body .hero-rail{--rail-gap:28px}}
+@media(min-width:2400px) and (max-width:2999px){html body .hero-rail{--rail-gap:32px;--rail-x-scale:.75;--rail-y-scale:.7875}}
+@media(min-width:3000px){html body .hero-rail{--rail-gap:32px}}
+
+@media(min-width:768px){
+ html body .hero-rail{
+  position:fixed!important;
+  top:var(--rail-top,0px)!important;
+  right:0!important;
+  z-index:2147483001!important;
+  opacity:1!important;
+  visibility:visible!important;
+  filter:none!important;
+  mix-blend-mode:normal!important;
+  pointer-events:none!important;
+  transition:width .18s ease,padding .18s ease!important;
+ }
+}
+
+/* 소리잔이 금 가기 시작하는 구간(html.hb-on, herobreak.js)에서 히어로 배경(소나무·달 그림)이 비쳐 보이던 문제:
+   이 구간에서 물레 무대 배경이 투명해지고 어두운 막(.hero-darkness)이 불투명도 .985로 내려가
+   그 아래 히어로 배경 캔버스가 1.5% 비쳤다. 어두운 막은 완전히 불투명하게 두고(색 전환은 그대로),
+   히어로 배경은 아예 그리지 않는다. */
+html.hb-on .hero-renderer>.hero-darkness{opacity:1!important}
+html.hb-on .hero-renderer>.hero-backdrop{visibility:hidden!important}
