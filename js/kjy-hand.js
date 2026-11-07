@@ -106,6 +106,14 @@ function aaTarget(r) {
   }
   requestAnimationFrame(aaLoop);
 })();
+// 손 모델(수 MB)을 다 받기 전부터 히어로 잔이 매끈하게 보이도록, 장면이 생기자마자 렌더러를 잡는다.
+(function aaHook() {
+  const d = window.__kwangjuyoDebug;
+  if (!d || !d.cup) return requestAnimationFrame(aaHook);
+  let sc = d.cup; while (sc.parent) sc = sc.parent;
+  const prev = sc.onBeforeRender;
+  sc.onBeforeRender = function (renderer) { if (prev) prev.apply(this, arguments); SSAA.renderer = renderer; };
+})();
 
 /* ====================== 1-c. 공용 마우스 흔들림 값 ======================
    소리잔이 보이는 모든 3D 장면(히어로 캔버스·구슬 소리 장면·사람들 이야기 잔)이 같은 값을 읽는다.

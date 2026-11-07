@@ -586,6 +586,7 @@ canvas.addEventListener('pointermove', ev => {
 // 미리 데우기: 셰이더 컴파일과 첫 그리기를 로드 시점에 끝내 둔다(전환 순간 끊김 방지)
 const warm = () => { if (running) return; try { sCur = 4; build(4, 0, 0, 0, 0, 0, 0); if (!shards) makeShards(); built = ''; wheelShow(1); renderer.compile(scene, camera); renderer.render(scene, camera); wheelShow(.5); renderer.compile(scene, camera); renderer.render(scene, camera); wheelShow(0); sCur = 0; } catch (e) { } };
 (window.requestIdleCallback || (f => setTimeout(f, 300)))(warm);
+window.__clayGL = { renderer, scene, camera };   // 깨짐·물레 장면(breakwheel.js)이 자기 셰이더를 미리 준비할 때 쓴다
 new IntersectionObserver(([e]) => { live = e.isIntersecting; if (live && !running) { running = true; clock.getDelta(); requestAnimationFrame(frame); } }, { rootMargin: '100% 0px 100% 0px' }).observe(section);
 window.__clayDbg = () => ({ cs: clay.scale.toArray(), sg: shardGroup.scale.toArray(), vis: shardGroup.visible, n: shards && shards.length, p });
 window.__clay = { settle: () => { p = target; sCur = p < P1 ? 4 * (1 - sm(fit(fit(p, P0, P1), .22, 1))) : stageOf(p); sVel = 0; dryCur = sm(fit(p, .87, .98)) * (sCur > 3.9 ? 1 : 0); }, busy: v => { act = v; }, state: () => ({ sCur, act, dryCur }) };
