@@ -55,7 +55,7 @@ body.story-dark .scene-shadows g{animation-play-state:paused}
 .hero-copy .eyebrow{margin-bottom:12px}.hero-copy h1{font-size:clamp(27px,2.8vw,40px);font-weight:600;line-height:1.24;letter-spacing:-.04em;text-align:left}.hero-copy>p:last-child{max-width:360px;margin-top:18px;line-height:var(--hero-body-lh)}
 .hero-card{left:var(--page-padding);bottom:5.7%;width:clamp(218px,19vw,278px);min-height:clamp(218px,19vw,278px);padding:18px;background:rgba(247,245,240,.32);border:1px solid rgba(255,255,255,.5);backdrop-filter:blur(13px);display:flex;flex-direction:column;transform:translateY(calc(var(--hero-progress)*50px))}
 .hero-card strong{display:block;margin-top:12px;font-size:clamp(20px,2vw,27px);line-height:1.2;letter-spacing:-.04em}.hero-card-rule{border-top:1px dotted currentColor;margin-top:auto;margin-bottom:16px}.hero-card>span:last-child{text-align:right}
-.hero-scroll{left:50%;bottom:22px;transform:translate(-50%,calc(var(--hero-progress)*20px));font-size:11px;font-weight:600;display:flex;align-items:center;gap:8px;min-height:44px;white-space:nowrap}.hero-scroll span{width:25px;height:25px;display:grid;place-items:center;border:1px solid currentColor;border-radius:50%;transition:transform .25s}.hero-scroll:hover span{transform:translateY(4px)}
+.hero-scroll{left:50%;bottom:22px;transform:translate(-50%,calc(var(--hero-progress)*20px));font-size:11px;font-weight:600;display:flex;align-items:center;gap:8px;min-height:44px;white-space:nowrap}
 .hero-rail{right:0;top:0;width:60px;height:200px;padding:18px 10px;background:#f7f0e4;display:flex;justify-content:space-between;align-items:center;writing-mode:vertical-rl;font-size:11px;font-weight:600}
 .site-header{height:0;padding:0;border:0;background:transparent;mix-blend-mode:normal;color:#25221e;z-index:40}
 .site-header .brand{position:fixed;left:var(--page-padding);top:calc(59px - var(--hero-shrink,0)*37px);min-height:0;line-height:.9;white-space:nowrap;z-index:2}
@@ -316,7 +316,7 @@ body.story-phase .scenery-bigtext{visibility:visible}
    own style. A soft warm shadow keeps the light type legible over the moon. */
 .site-header,.site-nav,.site-nav a,.hero-topline,.hero-copy,.hero-copy h1,.hero-copy p,.hero-scroll,.story-dark .site-header{color:#f7eee2}
 .hero-topline,.hero-copy h1,.hero-copy p,.hero-scroll{text-shadow:0 1px 14px rgba(70,40,18,.38)}
-.hero-scroll span{border-color:currentColor}
+
 .site-header .brand-image-window img,.story-dark .site-header .brand-image-window img{filter:invert(95%) sepia(17%) saturate(200%) hue-rotate(330deg) brightness(98%) contrast(99%)}
 .site-nav a{font-weight:600}
 /* 12px type for nav + rail; 8pt spacing (desktop/tablet only) */
@@ -461,11 +461,14 @@ body.menu-open .site-header .brand-image-window img,.story-dark.menu-open .site-
 }
 .hero-card-rule{border-top:clamp(2px,.105vw,4px) dotted rgba(255,246,229,.94)}
 
-/* ORYZO-inspired scroll cue: a rotating dotted ring and a descending chevron. */
-.hero-scroll>span{position:relative;border:0;isolation:isolate}
-.hero-scroll>span::before{content:'';position:absolute;inset:0;border:2px dotted rgba(255,237,215,.62);border-radius:50%;animation:scroll-ring 10.5s linear infinite}
-.hero-scroll>span i{display:block;width:33%;height:22%;background:currentColor;clip-path:polygon(0 20%,13% 0,50% 55%,87% 0,100% 20%,50% 100%);animation:scroll-chevron 1.5s ease-in-out infinite}
-.hero-scroll:hover>span{transform:none}
+/* 스크롤 안내 아이콘 — 모든 '스크롤하여 …'가 같은 모양·움직임을 쓴다(oryzo site-footer-scroll):
+   점선 원이 천천히 돌고, 1.75초마다 처음 1초 동안 expoInOut으로 아래 꺾쇠는 내려가며 사라지고 위 꺾쇠가 내려와 그 자리를 채운다.
+   움직이는 거리는 꺾쇠 높이 기준(%)이라 아이콘 크기가 달라져도 같은 모션이다. */
+.scroll-icon{position:relative;width:25px;height:25px;display:grid;place-items:center;isolation:isolate}
+.scroll-icon::before{content:'';position:absolute;inset:0;border:2px dotted rgba(255,237,215,.62);border-radius:50%;animation:scroll-ring 10.5s linear infinite}
+.scroll-icon i{grid-area:1/1;display:block;width:36%;height:22%;background:currentColor;clip-path:polygon(0 23.4%,12.7% 0,49.8% 53.2%,86.9% 0,99.6% 23.4%,49.8% 94.9%);animation:scroll-chev-out 1.75s infinite}
+.scroll-icon i+i{animation-name:scroll-chev-in}
 @keyframes scroll-ring{to{transform:rotate(360deg)}}
-@keyframes scroll-chevron{0%{translate:0 -4px;opacity:0}22%{opacity:1}72%{opacity:1}100%{translate:0 4px;opacity:0}}
-@media(prefers-reduced-motion:reduce){.hero-scroll>span::before,.hero-scroll>span i{animation:none}}
+@keyframes scroll-chev-out{0%{translate:0 0;opacity:1;animation-timing-function:cubic-bezier(.87,0,.13,1)}57.14%,100%{translate:0 116%;opacity:0}}
+@keyframes scroll-chev-in{0%{translate:0 -116%;opacity:0;animation-timing-function:cubic-bezier(.87,0,.13,1)}57.14%,100%{translate:0 0;opacity:1}}
+@media(prefers-reduced-motion:reduce){.scroll-icon::before,.scroll-icon i{animation:none}.scroll-icon i+i{display:none}}

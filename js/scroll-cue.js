@@ -3,7 +3,7 @@
    · 글자: c = 글자 순서(0~1), opacity = fit(r, c·.3, .7 + c·.3)
      → 사라질 때 오른쪽 글자부터 왼쪽으로 차례로 흐려지고, 나타날 때 왼쪽 글자부터 차례로 또렷해진다
    · 점선 원: scale = .5 + .5·backOut(r), opacity = fit(r, 0, .5)
-   · 화살표: opacity × r
+   · 화살표: opacity × r (아이콘 모양·움직임은 style.css .scroll-icon 하나를 모든 안내가 같이 쓴다)
    r이 0이면 숨긴다. */
 (() => {
   'use strict';
@@ -16,7 +16,7 @@
       const el = document.createElement('div');
       el.className = `eg-scroll ${className}`.trim();
       el.setAttribute('aria-hidden', 'true');
-      el.innerHTML = '<span><i class="kjy-chev"></i><i class="kjy-chev kjy-g1"></i><i class="kjy-chev kjy-g2"></i></span>';
+      el.innerHTML = '<span class="scroll-icon"><i></i><i></i></span>';
       const text = document.createElement('b');
       text.className = 'cue-text';
       const chars = [...label].map(ch => {

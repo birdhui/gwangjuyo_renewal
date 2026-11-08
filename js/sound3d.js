@@ -32,9 +32,6 @@ const css=`
 .s3d-title{margin:0;font-weight:700;font-size:calc(68 * var(--s3d-su));line-height:1.12;letter-spacing:-.04em;word-break:keep-all}
 .s3d-sub{margin:.75em 0 0;font-weight:400;font-size:16px;letter-spacing:-.02em;line-height:var(--hero-body-lh);word-break:keep-all}
 .s3d{--s3d-su:min(calc(100vw * .9375 / 1800),calc(100svh * 1.25 / 1024))}.s3d-box{position:absolute;left:50%;top:44svh;transform:translateX(-50%);width:calc(244.3 * var(--s3d-su));height:calc(49.6 * var(--s3d-su));display:flex;align-items:center;justify-content:center;padding:0;border:0;background:linear-gradient(90deg,#f7f1e6 50%,transparent 0) 0 0/6px 1px repeat-x,linear-gradient(90deg,#f7f1e6 50%,transparent 0) 0 100%/6px 1px repeat-x,linear-gradient(0deg,#f7f1e6 50%,transparent 0) 0 0/1px 6px repeat-y,linear-gradient(0deg,#f7f1e6 50%,transparent 0) 100% 0/1px 6px repeat-y,rgba(20,16,12,.08);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f7f1e6;font-size:14px;font-weight:400;line-height:1.1;text-align:center;letter-spacing:-.01em;opacity:0;box-sizing:border-box;white-space:nowrap}
-.s3d-scroll{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;min-height:44px;color:#f7f1e6;font-size:13px;font-weight:600;white-space:nowrap;opacity:0}
-.s3d-scroll>span{position:relative;width:25px;height:25px;display:grid;place-items:center}
-.s3d-scroll>span::before{content:'';position:absolute;inset:0;border:2px dotted rgba(255,237,215,.62);border-radius:50%;animation:scroll-ring 10.5s linear infinite}
 .s3d-veil{position:absolute;inset:0;pointer-events:none;opacity:0;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 30%,rgba(0,0,0,.5) 42%,transparent 56%);mask-image:linear-gradient(to bottom,#000 0%,#000 30%,rgba(0,0,0,.5) 42%,transparent 56%)}
 @media (max-width:767px){.s3d-title{font-size:clamp(30px,8.4vw,48px)}.s3d-eye,.s3d-sub{font-size:16px}.s3d-box{width:calc(14px * 15.27);height:calc(14px * 3.1)}}
 .s3d-ch{display:inline-block;opacity:0;will-change:opacity,filter,transform;white-space:pre}
@@ -97,7 +94,6 @@ root.innerHTML=`<div class="s3d-bg"><div class="s3d-photo"></div><div class="s3d
 <div class="s3d-veil"></div>
 <div class="s3d-copy"><p class="s3d-eye s3d-e1">맑게 올리는 한 잔</p><h2 class="s3d-title s3d-t1">손끝에서 맑게 번지는 소리</h2><p class="s3d-sub s3d-s1">한 잔을 들어 올리는 순간, 소리잔의 맑은 울림이<br>일상에 은은하게 스며듭니다.</p></div>
 <div class="s3d-box">소리잔</div>
-<div class="s3d-scroll" aria-hidden="true"><span><i class="kjy-chev"></i><i class="kjy-chev kjy-g1"></i><i class="kjy-chev kjy-g2"></i></span>스크롤하여 더 보기</div>
 <div class="s3d-copy2"><p class="s3d-eye s3d-e2">손끝에서 시작되는 울림</p><h2 class="s3d-title s3d-t2">소리잔의 맑은 소리</h2><p class="s3d-sub s3d-s2">잔의 굽 안에 머문 작은 울림을<br>구슬의 움직임으로 천천히 느껴보세요.</p></div>
 <div class="s3d-hint" aria-hidden="true"><svg class="s3d-wheel" viewBox="0 0 100 15"><path d="M50 12.1C82 12.1 100 3.6 100 2.1"/><path d="M50 12.1C18 12.1 0 3.6 0 2.1"/><circle cx="50" cy="12.1" r=".8"/><circle class="s3d-wheel-dot" cx="50" cy="12.1" r="1.8"/></svg><svg class="s3d-hand" viewBox="0 0 34 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V5.5a2.5 2.5 0 0 1 5 0V18m0-4.5a2.5 2.5 0 0 1 5 0V19m0-3.5a2.5 2.5 0 0 1 5 0V20m0-2a2.5 2.5 0 0 1 5 0v8c0 6.5-4.5 11-10.5 11h-2c-4 0-6.6-2-8.6-5.4L4.2 26a2.4 2.4 0 0 1 3.9-2.7L12 27"/></svg></div>
 <button class="s3d-sound" type="button" aria-pressed="false" aria-label="소리 켜기"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M3 9h4l6-5v16l-6-5H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path class="s3d-x" d="M18 9l6 6M24 9l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path class="s3d-w" d="M17.5 8.5a5 5 0 0 1 0 7M20.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
@@ -113,7 +109,7 @@ const $=s=>root.querySelector(s);
 const photo=$(".s3d-photo"),table=$(".s3d-table"),shade=$(".s3d-shade"),canvas=$(".s3d-gl"),copy=$(".s3d-copy"),copy2=$(".s3d-copy2"),hint=$(".s3d-hint"),hintDot=$(".s3d-wheel-dot"),hintHand=$(".s3d-hand"),soundBtn=$(".s3d-sound"),black=$(".s3d-black");
 // 글자 단위로 나누기(흐림 → 또렷 등장)
 const split=el=>{const t=el.textContent;el.setAttribute("aria-label",t);el.textContent="";return[...t].map(c=>{const s=document.createElement("span");s.className="s3d-ch";s.textContent=c;s.setAttribute("aria-hidden","true");el.appendChild(s);return s})};
-const box=$(".s3d-box"),scrollCue=$(".s3d-scroll"),veil=$(".s3d-veil");
+const box=$(".s3d-box"),veil=$(".s3d-veil");
 const splitBr=el=>{const out=[];const nodes=[...el.childNodes];el.setAttribute("aria-label",el.textContent);el.textContent="";for(const n of nodes){if(n.nodeName==="BR"){el.appendChild(document.createElement("br"));continue}for(const c of n.textContent){const sp=document.createElement("span");sp.className="s3d-ch";sp.textContent=c;sp.setAttribute("aria-hidden","true");el.appendChild(sp);out.push(sp)}}return out};
 const e1=splitBr($(".s3d-e1")),t1=splitBr($(".s3d-t1")),s1=splitBr($(".s3d-s1")),e2=splitBr($(".s3d-e2")),t2=splitBr($(".s3d-t2")),s2=splitBr($(".s3d-s2"));
 const reveal=(chars,inT,outT,rise=.55)=>{const n=Math.max(1,chars.length-1);chars.forEach((c,i)=>{const g=i/n,a=expoOut(fit(inT,g*.35,g*.35+.65)),b=fit(outT,g*.25,g*.25+.75),o=a*(1-b);c.style.opacity=o.toFixed(3);c.style.transform=`translate3d(0,${((1-a)*rise-b*.2).toFixed(3)}em,0)`;c.style.filter=o>=.999?"none":`blur(${((1-a)*.32+b*.25).toFixed(3)}em)`})};
@@ -358,7 +354,6 @@ function frame(now){
   reveal(t1,fit(we,3.65,4.45),fit(we,5.35,5.95));
   reveal(s1,fit(we,3.85,4.6),fit(we,5.4,6.0),.4);
   const bx=sm(fit(we,4.2,4.7))*(1-sm(fit(we,5.3,5.75)));box.style.opacity=bx.toFixed(3);box.style.filter=bx>=.999?"none":`blur(${((1-bx)*6).toFixed(1)}px)`;
-  {const c=sm(fit(we,3.3,4.5))*(1-sm(fit(we,5.35,5.9)));scrollCue.style.opacity=c.toFixed(3);scrollCue.style.transform=`translate(-50%,${((1-sm(fit(we,3.3,4.5)))*10).toFixed(1)}px)`;scrollCue.style.filter=c>=.999?"none":`blur(${((1-c)*4).toFixed(1)}px)`}
   /* 확대 화면 글 */
   reveal(e2,fit(we,7.4,8.0),fit(we,9.5,10.0),.5);
   reveal(t2,fit(we,7.5,8.2),fit(we,9.5,10.1));

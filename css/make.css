@@ -61,7 +61,7 @@ body.make-live .hero-rail{opacity:1!important}
  .hero-card strong{font-size:clamp(25px,1.667vw,calc(40px*var(--k)))}
  .hero-card-rule{margin-bottom:calc(16px*var(--k))}
  .hero-scroll{bottom:calc(22px*var(--k));font-size:calc(11px*var(--k));gap:calc(8px*var(--k));min-height:calc(44px*var(--k))}
- .hero-scroll span{width:calc(25px*var(--k));height:calc(25px*var(--k))}
+ .hero-scroll .scroll-icon{width:calc(25px*var(--k));height:calc(25px*var(--k))}
  .hero-rail{width:calc(var(--rail-width,60px)*var(--k));height:calc(var(--rail-height,200px)*var(--k));padding:calc(18px*var(--k)) calc(12px*var(--k))}
  .hero-rail,.hero-rail span{font-size:calc(16px*var(--k))!important}
  .hero-rail{gap:0;padding-block:calc(20px*var(--k))}
