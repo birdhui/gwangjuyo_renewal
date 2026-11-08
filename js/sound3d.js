@@ -29,9 +29,9 @@ const css=`
 .s3d-gl{position:absolute;inset:0;width:100%;height:100%;display:block}
 .s3d-copy,.s3d-copy2{position:absolute;left:0;right:0;top:calc(12svh + 20px);text-align:center;color:#f7f1e6;padding:0 16px;text-shadow:0 2px 24px rgba(30,20,10,.38)}
 .s3d-eye{margin:0 0 .7em;font-weight:500;font-size:20px;letter-spacing:-.01em;line-height:1.3;word-break:keep-all}
-.s3d-title{margin:0;font-weight:700;font-size:72px;line-height:1.12;letter-spacing:-.04em;word-break:keep-all}
+.s3d-title{margin:0;font-weight:700;font-size:calc(68 * var(--s3d-su));line-height:1.12;letter-spacing:-.04em;word-break:keep-all}
 .s3d-sub{margin:.75em 0 0;font-weight:400;font-size:20px;letter-spacing:-.02em;line-height:1.6;word-break:keep-all}
-.s3d-box{position:absolute;left:50%;top:44svh;transform:translateX(-50%);min-width:min(260px,60vw);padding:14px 28px;border:1.5px dashed rgba(247,241,230,.85);color:#f7f1e6;font-size:20px;font-weight:500;text-align:center;letter-spacing:-.01em;opacity:0;box-sizing:border-box}
+.s3d{--s3d-su:min(calc(100vw * .9375 / 1800),calc(100svh * 1.25 / 1024))}.s3d-box{position:absolute;left:50%;top:44svh;transform:translateX(-50%);width:calc(244.3 * var(--s3d-su));height:calc(49.6 * var(--s3d-su));display:flex;align-items:center;justify-content:center;padding:0;border:0;background:linear-gradient(90deg,#f7f1e6 50%,transparent 0) 0 0/6px 1px repeat-x,linear-gradient(90deg,#f7f1e6 50%,transparent 0) 0 100%/6px 1px repeat-x,linear-gradient(0deg,#f7f1e6 50%,transparent 0) 0 0/1px 6px repeat-y,linear-gradient(0deg,#f7f1e6 50%,transparent 0) 100% 0/1px 6px repeat-y,rgba(20,16,12,.08);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#f7f1e6;font-size:18px;font-weight:500;line-height:1.1;text-align:center;letter-spacing:-.01em;opacity:0;box-sizing:border-box;white-space:nowrap}
 .s3d-scroll{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;min-height:44px;color:#f7f1e6;font-size:13px;font-weight:600;white-space:nowrap;opacity:0}
 .s3d-scroll>span{position:relative;width:25px;height:25px;display:grid;place-items:center}
 .s3d-scroll>span::before{content:'';position:absolute;inset:0;border:2px dotted rgba(255,237,215,.62);border-radius:50%;animation:scroll-ring 10.5s linear infinite}
@@ -43,7 +43,7 @@ const css=`
 .s3d-hand{width:34px;height:40px;animation:s3dhand 2.4s ease-in-out infinite}
 @keyframes s3dhand{0%,100%{transform:translateX(-12px)}50%{transform:translateX(12px)}}
 @keyframes s3dslide{0%,100%{transform:translateX(-4px)}50%{transform:translateX(4px)}}
-@media (max-width:767px){.s3d-title{font-size:clamp(34px,9vw,52px)}.s3d-eye,.s3d-sub,.s3d-box{font-size:16px}}
+@media (max-width:767px){.s3d-title{font-size:clamp(30px,8.4vw,48px)}.s3d-eye,.s3d-sub{font-size:16px}.s3d-box{font-size:14px;width:calc(14px * 15.27);height:calc(14px * 3.1)}}
 .s3d-ch{display:inline-block;opacity:0;will-change:opacity,filter,transform;white-space:pre}
 .s3d-hint{position:absolute;left:0;right:0;bottom:calc(5svh + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:10px;color:#efe9df;font-size:clamp(14px,1.05vw,20px);letter-spacing:-.01em;opacity:0}
 .s3d-mouse{width:26px;height:42px;border:1.6px solid #efe9df;border-radius:13px;position:relative}
