@@ -16,14 +16,14 @@ st.textContent=
 +'@media(max-width:767px){html body .review-card blockquote{font-size:clamp(14px,3.8vw,18px)!important}}';
 (document.head||document.documentElement).appendChild(st);
 /* 3D 모델(.glb)은 로딩 그림의 등장이 끝난 뒤 읽는다(등장 중 메인 스레드가 막히지 않게).
-   base64 풀기는 브라우저 기본 기능(data: URL)으로 빠르게. */
-var base=window.fetch.bind(window),of=window.__kjyFetch0||base,loaded={},P={};
-function load(n){return loaded[n]||(loaded[n]=new Promise(function(res,rej){var s=document.createElement('script');s.src='js/models-'+n+'.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)}))}
-function dec(n){var c=window.__glbC||(window.__glbC={});if(c[n])return Promise.resolve(c[n]);if(P[n])return P[n];
-  return P[n]=load(n).then(function(){if(c[n])return c[n];var s=window.__glb[n];
-    return of('data:application/octet-stream;base64,'+s).then(function(r){return r.arrayBuffer()}).then(function(ab){return new Uint8Array(ab)},function(){var b=atob(s),a=new Uint8Array(b.length);for(var i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a})
-    .then(function(a){c[n]=a;delete window.__glb[n];return a})})}
+   모델은 assets/models/의 바이너리 파일을 그대로 받는다(예전 base64 JS보다 25% 작고, 문자열 해석·풀기 작업이 없다).
+   옛 만화풍 손(sori-hand-grip)은 실사 손(kjy-hand.js)으로 바뀌어 화면에 나오지 않으므로 빈 장면만 돌려준다(4.6MB를 받지 않음). */
+var base=window.fetch.bind(window),P={};
+function emptyGlb(){var j=new TextEncoder().encode('{"asset":{"version":"2.0"},"scene":0,"scenes":[{"nodes":[]}]}'),n=(j.length+3)&~3,b=new Uint8Array(20+n),v=new DataView(b.buffer);
+  v.setUint32(0,0x46546C67,true);v.setUint32(4,2,true);v.setUint32(8,b.length,true);v.setUint32(12,n,true);v.setUint32(16,0x4E4F534A,true);b.fill(32,20);b.set(j,20);return b}
 window.fetch=function(input,init){var u=typeof input==='string'?input:(input&&input.url)||String(input);var m=u.match(/assets\/models\/([\w-]+)\.glb(?:\?|$)/);
-  if(!m)return base(input,init);var n=m[1];
-  return Promise.resolve(window.__kjyPop).then(function(){return dec(n)}).then(function(a){return new Response(a.slice(),{status:200,headers:{'Content-Type':'model/gltf-binary'}})})};
+  if(!m)return base(input,init);
+  var n=m[1];   // 같은 모델을 여러 장면(히어로·물레·구슬 소리)이 동시에 요청해도 한 번만 받는다
+  if(!P[n])P[n]=Promise.resolve(window.__kjyPop).then(function(){return n==='sori-hand-grip'?emptyGlb().buffer:base(input,init).then(function(r){if(!r.ok)throw new Error(r.status+' '+u);return r.arrayBuffer()})});
+  return P[n].then(function(ab){return new Response(ab.slice(0),{status:200,headers:{'Content-Type':'model/gltf-binary'}})})};
 })();
