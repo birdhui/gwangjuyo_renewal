@@ -5,7 +5,7 @@
    4) 카메라가 잔의 손잡이(아랫부분)로 천천히 다가간다.
    5) 손잡이가 투명해지며 속에 든 구슬이 보이고, 마우스를 움직이기만 해도(클릭 없이) 구슬이 굴러 맑은 소리를 낸다.
    6) 서서히 암전. (예전 구슬 섹션 화면은 숨기고 그 스크롤 길이를 그대로 쓴다) */
-import*as THREE from"three";
+import*as THREE from"three";import{createRenderer}from"./shared-gl.js";
 import{GLTFLoader}from"three/addons/loaders/GLTFLoader.js";
 import{RoomEnvironment}from"three/addons/environments/RoomEnvironment.js";
 import{createPineBackdrop}from"./pine-backdrop.js?v=20261108-r74";
@@ -117,7 +117,7 @@ const e1=splitBr($(".s3d-e1")),t1=splitBr($(".s3d-t1")),s1=splitBr($(".s3d-s1"))
 const reveal=(chars,inT,outT,rise=.55)=>{const n=Math.max(1,chars.length-1);chars.forEach((c,i)=>{const g=i/n,a=expoOut(fit(inT,g*.35,g*.35+.65)),b=fit(outT,g*.25,g*.25+.75),o=a*(1-b);c.style.opacity=o.toFixed(3);c.style.transform=`translate3d(0,${((1-a)*rise-b*.2).toFixed(3)}em,0)`;c.style.filter=o>=.999?"none":`blur(${((1-a)*.32+b*.25).toFixed(3)}em)`})};
 
 /* ---------- 3D ---------- */
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:"high-performance"});
+const renderer=createRenderer({canvas,antialias:true,alpha:true,powerPreference:"high-performance"});
 renderer.setClearColor(0x000000,0);renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.13;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;

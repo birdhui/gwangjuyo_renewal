@@ -15,6 +15,7 @@
  * 마지막에 초점 꽃잎의 은은한 빛 번짐, 비네팅, 필름 그레인을 더한다.
  */
 import * as THREE from 'three';
+import { createRenderer } from './shared-gl.js';
 import { createPetalGeometry, createPetalMaterial, randomPetalShape } from './footer-petal.js';
 
 const root = document.getElementById('site-end');
@@ -58,7 +59,7 @@ function init(root) {
   ];
 
   /* ---------- three 기본 ---------- */
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: true, powerPreference: 'high-performance' });
+  const renderer = createRenderer({ canvas, antialias: true, alpha: true, premultipliedAlpha: true, powerPreference: 'high-performance' });
   renderer.setClearColor(0x000000, 0);
   renderer.autoClear = false;
   const scene = new THREE.Scene();

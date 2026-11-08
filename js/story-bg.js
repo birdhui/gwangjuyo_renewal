@@ -74,40 +74,58 @@ void main(){
   // 화면 가까이(위아래 반 화면 안) 있는 배경만 다시 그린다(스크롤할 때마다 화면 밖 배경까지 전체 화면으로 그리지 않게).
   // 가까워지면 그 순간의 값으로 미리 그려 두어, 화면에 들어올 때는 이미 맞는 그림이다.
   const seen = new IntersectionObserver(es => { for (const e of es) { const v = views.find(x => x.canvas === e.target); if (v) { v.vis = e.isIntersecting; v.key = ''; } } kick(); }, { rootMargin: '50% 0px' });
-  function mount(host) {
-    if (host.querySelector('canvas.story-bg-canvas')) return;
+  // 그림은 WebGL 문맥 하나(painter)에서 그리고, 각 자리(host)의 캔버스에는 2D로 옮겨 그린다
+  // → 배경 자리가 여럿이어도 WebGL 문맥은 하나. 같은 값·같은 크기면 한 번 그린 것을 여러 자리에 옮긴다.
+  const painter = (() => {
     const canvas = document.createElement('canvas');
-    canvas.className = 'story-bg-canvas';
-    canvas.setAttribute('aria-hidden', 'true');
-    host.prepend(canvas);
-    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, premultipliedAlpha: false, preserveDrawingBuffer: false });
-    if (!gl) { canvas.remove(); return; }
+    const gl = canvas.getContext('webgl', { antialias: false, alpha: false, premultipliedAlpha: false, preserveDrawingBuffer: true });
+    if (!gl) return null;
     const sh = (type, src) => { const x = gl.createShader(type); gl.shaderSource(x, src); gl.compileShader(x); return x; };
     const prog = gl.createProgram();
     gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { canvas.remove(); return; }
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
     gl.useProgram(prog);
     const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const U = { res: gl.getUniformLocation(prog, 'u_res'), glow: gl.getUniformLocation(prog, 'u_glow'), bloom: gl.getUniformLocation(prog, 'u_bloom'), seed: gl.getUniformLocation(prog, 'u_seed'), wear: gl.getUniformLocation(prog, 'u_wear') };
-    const v = { canvas, gl, U, w: 0, h: 0, key: '', vis: false };
-    canvas.addEventListener('webglcontextrestored', () => { v.key = ''; kick(); });
+    let key = '';
+    canvas.addEventListener('webglcontextlost', e => e.preventDefault());
+    return {
+      canvas,
+      paint(W, H, glow, bloom, wear) {
+        const k = glow.toFixed(4) + '|' + bloom.toFixed(4) + '|' + wear.toFixed(4) + '|' + W + 'x' + H;
+        if (k === key || gl.isContextLost()) return;
+        key = k;
+        if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; gl.viewport(0, 0, W, H); }
+        gl.uniform2f(U.res, W, H); gl.uniform1f(U.glow, glow); gl.uniform1f(U.bloom, bloom); gl.uniform1f(U.seed, 0); gl.uniform1f(U.wear, wear);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      },
+    };
+  })();
+  function mount(host) {
+    if (!painter || host.querySelector('canvas.story-bg-canvas')) return;
+    const canvas = document.createElement('canvas');
+    canvas.className = 'story-bg-canvas';
+    canvas.setAttribute('aria-hidden', 'true');
+    host.prepend(canvas);
+    const v = { canvas, ctx: canvas.getContext('2d', { alpha: false }), w: 0, h: 0, key: '', vis: false };
     seen.observe(canvas);
     views.push(v);
   }
+  // 화면 가까이 있고, 자기나 부모가 완전히 투명하지 않은 자리만 그린다(투명한 자리는 다시 보일 때 그 순간의 값으로 그린다)
+  const shown = c => !c.checkVisibility || c.checkVisibility({ opacityProperty: true, visibilityProperty: true });
   function drawView(v, glow, bloom, wear) {
-    if (!v.vis || !v.canvas.isConnected) return;
+    if (!v.vis || !v.canvas.isConnected || !shown(v.canvas)) { v.key = ''; return; }
     const dpr = Math.min(devicePixelRatio || 1, 2);
     const W = Math.round(v.canvas.clientWidth * dpr), H = Math.round(v.canvas.clientHeight * dpr);
     if (!W || !H) return;
-    const { gl, U } = v;
-    if (W !== v.w || H !== v.h) { v.w = v.canvas.width = W; v.h = v.canvas.height = H; gl.viewport(0, 0, W, H); v.key = ''; }
+    if (W !== v.w || H !== v.h) { v.w = v.canvas.width = W; v.h = v.canvas.height = H; v.key = ''; }
     const key = glow.toFixed(4) + '|' + bloom.toFixed(4) + '|' + wear.toFixed(4) + '|' + W + 'x' + H;
     if (key === v.key) return;
     v.key = key;
-    gl.uniform2f(U.res, W, H); gl.uniform1f(U.glow, glow); gl.uniform1f(U.bloom, bloom); gl.uniform1f(U.seed, 0); gl.uniform1f(U.wear, wear);
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    painter.paint(W, H, glow, bloom, wear);
+    v.ctx.drawImage(painter.canvas, 0, 0);
   }
   let raf = 0, eg = null, eb = null, ew = null, lastDark = '';
   function frame() {

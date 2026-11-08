@@ -7,6 +7,7 @@ import { createBeats } from './beats.js';
 //  - 선반 위 소리잔 하나: 초벌 → 유약(시유) 잔으로 바뀌고, 가장 뜨거울 때는 잔 자체가 불빛처럼 달아오른다.
 //  - 장작 불티: 가마 안에서 솟는 불티, 입구 밖으로 튀는 불티, 굴뚝 위로 날리는 불티(모두 화면 GPU 점, 상태 없이 시간으로 계산).
 import * as THREE from 'three';
+import { createRenderer } from './shared-gl.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -34,7 +35,7 @@ const CUP_W = CUP_PX.h * 263 / 300;
 const CUP = [ (CUP_PX.cx - CUP_W / 2) / IMG[0], 1 - CUP_PX.bottom / IMG[1], CUP_W / IMG[0], CUP_PX.h / IMG[1] ];   // u0, v0, du, dv
 
 const canvas = document.getElementById('fire-gl');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+const renderer = createRenderer({ canvas, antialias: false });
 const sceneDpr = () => Math.min(devicePixelRatio || 1, innerWidth >= 2560 ? 1 : 1.5);
 renderer.setPixelRatio(sceneDpr());
 renderer.toneMapping = THREE.NoToneMapping;   // 사진 색을 그대로(밝기만 불이 바꾼다)
@@ -209,9 +210,12 @@ addEventListener('scroll', readScroll, { passive: true }); readScroll();
 const heatOf = q => sm(fit(q, .1, .5)) * (1 - sm(fit(q, .64, .92)));
 const glazeOf = q => sm(fit(q, .4, .6));
 const STILL = /[?&]still\b/.test(location.search);
+// 가마 화면의 불투명도 = --fire-o × --fire-k × --fire-in (script.js·glb-shim.js가 html에 적는다, after-sound.css)
+const rootStyle = document.documentElement.style, cssNum = (k, d) => { const v = parseFloat(rootStyle.getPropertyValue(k)); return Number.isFinite(v) ? v : d; };
+const stageShown = () => STILL || cssNum('--fire-o', 0) * cssNum('--fire-k', 1) * cssNum('--fire-in', 0) > 0;
 const clock = new THREE.Clock();
 let heat = 0, glaze = 0;
-let live = false, running = false;
+let live = false, running = false, warmed = false;
 function frame() {
   const dt = Math.min(.05, clock.getDelta()), t = clock.elapsedTime;
   p += (target - p) * (1 - Math.pow(.002, dt));
@@ -232,7 +236,7 @@ function frame() {
   { const SW = window.__kjySway; if (SW && !reduced) { const tx = (SW.x * 9).toFixed(1), ty = (SW.y * 5).toFixed(1); const v = `translate3d(${tx}px,${ty}px,0) scale(1.02)`; if (canvas.style.transform !== v) canvas.style.transform = v; } } // 가마도 마우스를 따라 아주 살짝
 
   beatsUpdate(p);
-  composer.render(dt);
+  if (!warmed || stageShown()) { composer.render(dt); warmed = true; }   // 첫 프레임은 셰이더 준비를 위해 그리고, 그 뒤 가마 화면이 완전히 투명한 동안(등장 전·사라진 뒤)은 그리지 않는다
   if (live && !STILL) requestAnimationFrame(frame); else running = false;
 }
 frame(); canvas.classList.add('ready');

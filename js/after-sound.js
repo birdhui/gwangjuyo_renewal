@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createRenderer } from './shared-gl.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createTitleLight } from './beauty-light.js?v=20261108-r64';
 
@@ -112,7 +113,7 @@ function init() {
     if (cupLoading || reduced || !window.WebGLRenderingContext) return;
     cupLoading = true;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+      renderer = createRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.42;
