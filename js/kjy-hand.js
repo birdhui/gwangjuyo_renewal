@@ -145,7 +145,7 @@ window.__kjyResCap = 3;
 const TEX_KEYS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap', 'clearcoatNormalMap', 'clearcoatRoughnessMap', 'sheenColorMap', 'sheenRoughnessMap', 'transmissionMap', 'thicknessMap', 'specularIntensityMap', 'specularColorMap', 'bumpMap'];
 
 function warmScene(renderer, scene, camera) {
-  if (warm.pending || performance.now() < warm.next || document.documentElement.classList.contains('is-loading')) return;   // 로딩 중에는 첫 화면 준비를 방해하지 않게 쉰다
+  if (warm.pending || performance.now() < warm.next || !document.getElementById('hero-stage')?.classList.contains('is-ready')) return;   // 히어로가 처음 그려질 때까지는 쉬고, 그 뒤로는 로딩 화면 뒤에서 미리 올려 둔다
   warm.pending = true;
   (window.requestIdleCallback || (f => setTimeout(f, 120)))(() => {
     warm.pending = false;

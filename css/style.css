@@ -37,7 +37,7 @@
 .hero-stage.is-ready .hero-poster{opacity:0}
 .hero-renderer,.hero-canvas{pointer-events:none}
 .hero-renderer{opacity:0;transition:opacity .9s ease}.hero-stage.is-ready .hero-renderer{opacity:1}
-.hero-backdrop{position:absolute;width:max(110vw,195.556svh);height:max(61.875vw,110svh);left:50%;bottom:0;transform:translateX(-50%);background:#c9b08c url('../img/hero-bg-pine.jpg') center/100% 100% no-repeat}
+.hero-backdrop{position:absolute;width:max(110vw,195.556svh);height:max(61.875vw,110svh);left:50%;bottom:0;transform:translateX(-50%);background:#c9b08c url('../img/hero-bg-pine.webp') center/100% 100% no-repeat}
 .hero-backdrop-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .scene-shadows{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:multiply}
 .scene-shadows g{transform-box:fill-box}.scene-shadows .canopy-cast,.scene-shadows .linen-foliage-cast{transform-origin:0 0}.scene-shadows .leaf-cast{transform-origin:45% 0}.scene-shadows .branch-cast,.scene-shadows .linen-cast{transform-origin:100% 0}

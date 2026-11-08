@@ -71,6 +71,9 @@ void main(){
     return [glow, bloom, wear];
   }
   const views = [];
+  // 화면 가까이(위아래 반 화면 안) 있는 배경만 다시 그린다(스크롤할 때마다 화면 밖 배경까지 전체 화면으로 그리지 않게).
+  // 가까워지면 그 순간의 값으로 미리 그려 두어, 화면에 들어올 때는 이미 맞는 그림이다.
+  const seen = new IntersectionObserver(es => { for (const e of es) { const v = views.find(x => x.canvas === e.target); if (v) { v.vis = e.isIntersecting; v.key = ''; } } kick(); }, { rootMargin: '50% 0px' });
   function mount(host) {
     if (host.querySelector('canvas.story-bg-canvas')) return;
     const canvas = document.createElement('canvas');
@@ -88,12 +91,13 @@ void main(){
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const U = { res: gl.getUniformLocation(prog, 'u_res'), glow: gl.getUniformLocation(prog, 'u_glow'), bloom: gl.getUniformLocation(prog, 'u_bloom'), seed: gl.getUniformLocation(prog, 'u_seed'), wear: gl.getUniformLocation(prog, 'u_wear') };
-    const v = { canvas, gl, U, w: 0, h: 0, key: '' };
+    const v = { canvas, gl, U, w: 0, h: 0, key: '', vis: false };
     canvas.addEventListener('webglcontextrestored', () => { v.key = ''; kick(); });
+    seen.observe(canvas);
     views.push(v);
   }
   function drawView(v, glow, bloom, wear) {
-    if (!v.canvas.isConnected) return;
+    if (!v.vis || !v.canvas.isConnected) return;
     const dpr = Math.min(devicePixelRatio || 1, 2);
     const W = Math.round(v.canvas.clientWidth * dpr), H = Math.round(v.canvas.clientHeight * dpr);
     if (!W || !H) return;

@@ -7,7 +7,7 @@
 .beauty-night,.beauty-day,.beauty-glow,.beauty-pine{position:absolute;inset:0;pointer-events:none}
 .beauty-night{background:radial-gradient(ellipse 55% 72% at 43% 72%,#34291f 0%,#19120f 54%,#0b0908 100%);opacity:var(--night-opacity,1)}
 .beauty-day{background:var(--after-ivory);opacity:var(--day-opacity,0)}
-.beauty-pine{background-image:url('../img/hero-bg-pine.jpg');background-size:cover;background-position:center 15%;filter:grayscale(1) contrast(1.25);mix-blend-mode:multiply;opacity:calc(var(--day-opacity,0)*.16);mask-image:linear-gradient(to bottom,#000 0%,#000 45%,transparent 78%)}
+.beauty-pine{background-image:url('../img/hero-bg-pine.webp');background-size:cover;background-position:center 15%;filter:grayscale(1) contrast(1.25);mix-blend-mode:multiply;opacity:calc(var(--day-opacity,0)*.16);mask-image:linear-gradient(to bottom,#000 0%,#000 45%,transparent 78%)}
 .beauty-glow{background:radial-gradient(ellipse 31% 17% at var(--glow-x,50%) 82%,rgba(255,233,194,.29),transparent 74%);opacity:var(--marble-opacity,0)}
 .beauty-marble{position:absolute;left:0;top:47%;z-index:3;width:clamp(240px,35vw,630px);aspect-ratio:1;transform:translate3d(var(--marble-x,100vw),-50%,0) rotate(var(--marble-rotation,0deg));opacity:var(--marble-opacity,0);filter:drop-shadow(14px 18px 24px rgba(0,0,0,.58));will-change:transform,opacity;pointer-events:none}
 .beauty-marble img{width:100%;height:100%;object-fit:contain}

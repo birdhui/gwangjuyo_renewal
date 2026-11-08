@@ -24,7 +24,7 @@ const css=`
 .s3d.is-live{visibility:visible}
 .s3d-bg{position:absolute;inset:0;overflow:hidden}
 .s3d-photo,.s3d-table{position:absolute;left:0;top:0;background-size:100% 100%;background-repeat:no-repeat;will-change:transform,filter,opacity;transform-origin:0 0}
-.s3d-photo{background-image:url(img/hero-bg-pine.jpg)}
+.s3d-photo{background-image:url(img/hero-bg-pine.webp)}
 .s3d-pine{display:block;width:100%;height:100%;visibility:hidden}.s3d-pine.is-on{visibility:visible}
 .s3d-table{background-image:url(img/sound-table-top.jpg);opacity:0}
 .s3d-shade{position:absolute;inset:0;background:radial-gradient(ellipse 70% 62% at 50% 56%,rgba(0,0,0,0) 0%,rgba(0,0,0,.55) 100%);opacity:0}
@@ -193,7 +193,7 @@ new GLTFLoader().loadAsync("assets/models/sori-60th-doraji.glb").then(g=>{
 /* 미리 데우기: 마지막 칸(표지)이 들어와 3D가 처음 그려지는 순간, 셰이더 컴파일·그림자 지도·텍스처 업로드·배경 사진 디코딩을
    그 자리에서 하느라 멈추지 않도록 로드 뒤 쉬는 시간에 한 번 끝내 둔다(화면에는 보이지 않는 상태에서). */
 function warm(){
-  S.warmImgs=["img/hero-bg-pine.jpg","img/sound-table-top.jpg"].map(src=>{const i=new Image();i.src=src;i.decode().catch(()=>{});return i});
+  S.warmImgs=["img/hero-bg-pine.webp","img/sound-table-top.jpg"].map(src=>{const i=new Image();i.src=src;i.decode().catch(()=>{});return i});
   const draw=()=>{if(root.classList.contains("is-live"))return;size();cup.updateMatrixWorld(true);placeCamera(0,0,1,0);marble.visible=true;renderer.render(scene,camera);marble.visible=false};
   marble.visible=true;const p=renderer.compileAsync?renderer.compileAsync(scene,camera):Promise.resolve(renderer.compile(scene,camera));marble.visible=false;
   p.then(draw,draw);
