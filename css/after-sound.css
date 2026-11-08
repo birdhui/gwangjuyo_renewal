@@ -132,8 +132,6 @@ html body #beauty .beauty-marble{filter:none!important;container-type:inline-siz
   html body .make-fire{height:500svh}
   html body .make-fire .make-stage{display:block;opacity:calc(var(--fire-o,0)*var(--fire-k,1)*var(--fire-in,0));-webkit-mask-image:radial-gradient(circle at var(--kx,50%) var(--ky,50%),#000 calc(var(--fire-in,0)*140vmax - 40vmax),transparent calc(var(--fire-in,0)*140vmax));mask-image:radial-gradient(circle at var(--kx,50%) var(--ky,50%),#000 calc(var(--fire-in,0)*140vmax - 40vmax),transparent calc(var(--fire-in,0)*140vmax))}
 }
-/* 소나무 그림자: 달 가장자리에서 끊겨 있던 마스크를 이어 붙인 그림으로 */
-html body .kjy-pine-shadow{-webkit-mask-image:url(../img/hero-bg-pine-branch2.webp);mask-image:url(../img/hero-bg-pine-branch2.webp)}
 /* r26 review: smoother, larger image zoom-in at center (oryzo-like) */
 html body .review-image{transform:scale(var(--review-image-scale,.78));transform-origin:100% 50%;filter:grayscale(var(--review-image-gray,1));backface-visibility:hidden}
 html body .review-copy{filter:none;transform:translate3d(0,var(--review-y,0px),0)}
@@ -170,9 +168,10 @@ html body #beauty .beauty-marble{width:min(62svh,62vw)!important}
 #beauty .beauty-eyebrow{top:calc(5svh + 1.6667vw);font-size:clamp(13px,.95vw,18px);line-height:1.3;transform:translate(-50%,calc((1 - var(--bt-cap,0)) * 10px))}
 #beauty .beauty-caption{top:68svh;font-size:clamp(14px,1.05vw,20px);line-height:var(--hero-body-lh);transform:translate(-50%,calc(-50% + (1 - var(--bt-cap,0)) * 10px))}
 @media(max-width:767px){#beauty .beauty-eyebrow{top:calc(5svh + 6.6667vw);font-size:12px}#beauty .beauty-caption{top:80svh;font-size:13px}}
-/* 아름다움(낮) 소나무 그림자 — 가지 하나(왼쪽 끝 가지까지 솔잎이 달린 온전한 가지)만 오른쪽 위에 둔다 */
-html body .kjy-pine-shadow{-webkit-mask-image:url(../img/hero-bg-pine-right.webp)!important;mask-image:url(../img/hero-bg-pine-right.webp)!important;-webkit-mask-size:100% 100%!important;mask-size:100% 100%!important;aspect-ratio:990/700!important;width:81.4vw!important;inset:-7% -3% auto auto!important}
-@media(max-width:767px){html body .kjy-pine-shadow{width:151.8vw!important}}
+/* 아름다움(낮) 소나무 그림자 — 소나무 가지 하나(hero-bg-pine-shadow.webp)가 오른쪽 위에서 바람에 천천히 흔들린다(가지가 들어오는 오른쪽 위를 축으로) */
+.kjy-pine-shadow{position:absolute;inset:-7% -3% auto auto;z-index:1;width:88vw;aspect-ratio:1280/546;pointer-events:none;background:#3b2a1c;opacity:calc(var(--day-opacity,0)*.2);mask:url(../img/hero-bg-pine-shadow.webp) 0 0/100% 100% no-repeat;filter:blur(7px);transform-origin:100% 12%;animation:kjy-pine-sway 7.5s ease-in-out infinite}
+@keyframes kjy-pine-sway{0%,100%{transform:rotate(0deg) translate3d(0,0,0)}22%{transform:rotate(.9deg) translate3d(-6px,3px,0)}48%{transform:rotate(-.5deg) translate3d(4px,-2px,0)}71%{transform:rotate(1.3deg) translate3d(-9px,5px,0)}}
+@media(max-width:767px){.kjy-pine-shadow{width:160vw}}
 
 /* 사람들 섹션 소개 문구 굵기 400 */
 html body #people .people-intro{font-weight:400}
