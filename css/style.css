@@ -314,8 +314,9 @@ body.story-phase .scenery-bigtext{visibility:visible}
 /* One text colour across the hero (same cream as the hero card): logo,
    top line, navigation, right copy and scroll cue. The scroll rail keeps its
    own style. A soft warm shadow keeps the light type legible over the moon. */
-.site-header,.site-nav,.site-nav a,.hero-topline,.hero-copy,.hero-copy h1,.hero-copy p,.hero-scroll,.story-dark .site-header{color:#f7eee2}
-.hero-topline,.hero-copy h1,.hero-copy p,.hero-scroll{text-shadow:0 1px 14px rgba(70,40,18,.38)}
+:root{--hero-ink:#f7eee2;--hero-ink-shadow:0 1px 14px rgba(70,40,18,.38)} /* hero 글자 색·그림자(사진 위 글자에 같이 쓴다) */
+.site-header,.site-nav,.site-nav a,.hero-topline,.hero-copy,.hero-copy h1,.hero-copy p,.hero-scroll,.story-dark .site-header{color:var(--hero-ink)}
+.hero-topline,.hero-copy h1,.hero-copy p,.hero-scroll{text-shadow:var(--hero-ink-shadow)}
 
 .site-header .brand-image-window img,.story-dark .site-header .brand-image-window img{filter:invert(95%) sepia(17%) saturate(200%) hue-rotate(330deg) brightness(98%) contrast(99%)}
 .site-nav a{font-weight:600}
