@@ -320,7 +320,7 @@ function frame(now){
     magItems.forEach((el,i)=>{const g=i/(n-1),a=expoOut(fit(inn,g*.55,g*.55+.45)),e=exit.get(el)||{x:0,o:1,s:1};el.style.opacity=(a*e.o).toFixed(3);el.style.transform=`translate3d(${e.x.toFixed(1)}px,${((1-a)*18*px).toFixed(1)}px,0)${e.s!==1?` scale(${e.s.toFixed(4)})`:""}`;el.style.filter=a>=.999?"none":`blur(${((1-a)*6).toFixed(1)}px)`});
     {const lr=fit(hide,.25,.75);magRoll.style.setProperty("--k","0");[...magRoll.children].forEach(b=>b.style.transform=`translate3d(0,${(-4*io(fit(inn,.15,.75))-3*cubicIn(lr)).toFixed(3)}em,0)`);
      magBar.style.transform=`scaleY(${(expoOut(fit(inn,.62,1))*(1-backIn(lr))).toFixed(3)})`}
-    const vis=we<3.9;magT.style.visibility=mag.style.visibility=vis?"visible":"hidden";
+    const vis=we<3.9;magT.style.visibility=mag.style.visibility=vis?"":"hidden";  // 보일 때는 부모(.s3d)를 따른다 — "visible"로 두면 장면이 꺼져도(.s3d 숨김) 표지 글이 hero 위에 남는다
   }
   /* 3) 위에서 내려다보는 시선(E) → 4) 손잡이로 다가감(A) → 5) 회색·흐림(G), 투시·구슬(X) → 6) 암전(B) */
   const E=fit(we,2.9,4.3),A=fit(we,5.3,7.7),GR=sm(fit(we,5.5,7.3)),X=sm(fit(we,7.2,7.9)),B=sm(fit(we,9.7,10.7));
