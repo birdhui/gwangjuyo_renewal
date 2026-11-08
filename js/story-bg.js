@@ -30,7 +30,7 @@
 
   const VS = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
   const FS = `precision highp float;
-uniform vec2 u_res;uniform float u_glow;uniform float u_bloom;uniform float u_seed;
+uniform vec2 u_res;uniform float u_glow;uniform float u_bloom;uniform float u_seed;uniform float u_wear;
 const vec3 C0=vec3(15.,8.,4.)/255.;      // #0f0804
 const vec3 C1=vec3(109.,57.,22.)/255.;   // #6d3916
 const vec3 LIFT=vec3(19.7,18.2,16.6)/255.;
@@ -48,6 +48,10 @@ void main(){
   float h=pow(clamp(1.-r/1.75,0.,1.),2.4)*u_bloom*u_glow;   // bloom처럼 넓고 부드러운 빛 번짐
   lin+=toLin(C1)*h*.55;
   vec3 c=LIFT+GAIN*(1.+.22*u_bloom)*toSrgb(lin);
+  // oryzo 'it's wearable' 화면(후처리 포함)을 캡처 색에 맞춘 값: 좌측 하단 모서리에만 따뜻한 빛이 모이고 나머지는 어둡게
+  vec3 linW=mix(toLin(C0),toLin(C1),pow(1.-clamp(r,0.,1.),4.)*u_glow)+toLin(C1)*.9*pow(clamp(1.-r/.3,0.,1.),1.5)*u_glow;
+  vec3 cW=vec3(26.93,24.71,22.03)/255.+vec3(.5822,.6442,.804)*toSrgb(linW);
+  c=mix(c,cW,u_wear);
   float n=hash(gl_FragCoord.xy+u_seed)+hash(gl_FragCoord.yx*1.37+u_seed+17.)-1.;   // 삼각 분포 디더
   gl_FragColor=vec4(c+n/255.,1.);
 }`;
@@ -56,15 +60,15 @@ void main(){
     const y = scrollY / Math.max(1, innerHeight);
     const glow = reduce.matches ? 0 : smooth(GLOW_START, GLOW_END, y);
     const s = Math.min(1, Math.max(0, +window.__kwangjuyoSeriesProgress || 0));
-    let bloom = reduce.matches ? 0 : smooth(0, .08, s) * (1 - smooth(.93, 1, s));
-    // 일상의 자리마다(풍경) 섹션: 시리즈보다 더 크게 퍼지고 밝은 글로우(섹션에 들어오며 커지고, 나가며 줄어듦)
+    let bloom = reduce.matches ? 0 : smooth(0, .08, s) * (1 - smooth(.93, 1, s)), wear = 0;
+    // 일상의 자리마다(풍경) 섹션: oryzo 'it's wearable' 섹션과 같은 기본 배경(추가 퍼짐 없음)
     const sc = document.getElementById('scenery');
     if (sc && !reduce.matches) {
       const r = sc.getBoundingClientRect(), vh = innerHeight;
       const k = smooth(vh * .9, vh * .1, r.top) * smooth(vh * .1, vh * 1.1, r.bottom);
-      bloom = Math.max(bloom, 1.45 * k);
+      bloom = bloom * (1 - k); wear = k; // oryzo 'it's wearable'과 같은 배경(퍼짐 없이 좌측 하단 모서리에만 빛)
     }
-    return [glow, bloom];
+    return [glow, bloom, wear];
   }
   const views = [];
   function mount(host) {
@@ -83,35 +87,36 @@ void main(){
     const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
     const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    const U = { res: gl.getUniformLocation(prog, 'u_res'), glow: gl.getUniformLocation(prog, 'u_glow'), bloom: gl.getUniformLocation(prog, 'u_bloom'), seed: gl.getUniformLocation(prog, 'u_seed') };
+    const U = { res: gl.getUniformLocation(prog, 'u_res'), glow: gl.getUniformLocation(prog, 'u_glow'), bloom: gl.getUniformLocation(prog, 'u_bloom'), seed: gl.getUniformLocation(prog, 'u_seed'), wear: gl.getUniformLocation(prog, 'u_wear') };
     const v = { canvas, gl, U, w: 0, h: 0, key: '' };
     canvas.addEventListener('webglcontextrestored', () => { v.key = ''; kick(); });
     views.push(v);
   }
-  function drawView(v, glow, bloom) {
+  function drawView(v, glow, bloom, wear) {
     if (!v.canvas.isConnected) return;
     const dpr = Math.min(devicePixelRatio || 1, 2);
     const W = Math.round(v.canvas.clientWidth * dpr), H = Math.round(v.canvas.clientHeight * dpr);
     if (!W || !H) return;
     const { gl, U } = v;
     if (W !== v.w || H !== v.h) { v.w = v.canvas.width = W; v.h = v.canvas.height = H; gl.viewport(0, 0, W, H); v.key = ''; }
-    const key = glow.toFixed(4) + '|' + bloom.toFixed(4) + '|' + W + 'x' + H;
+    const key = glow.toFixed(4) + '|' + bloom.toFixed(4) + '|' + wear.toFixed(4) + '|' + W + 'x' + H;
     if (key === v.key) return;
     v.key = key;
-    gl.uniform2f(U.res, W, H); gl.uniform1f(U.glow, glow); gl.uniform1f(U.bloom, bloom); gl.uniform1f(U.seed, 0);
+    gl.uniform2f(U.res, W, H); gl.uniform1f(U.glow, glow); gl.uniform1f(U.bloom, bloom); gl.uniform1f(U.seed, 0); gl.uniform1f(U.wear, wear);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
-  let raf = 0, eg = null, eb = null, lastDark = '';
+  let raf = 0, eg = null, eb = null, ew = null, lastDark = '';
   function frame() {
     raf = 0;
-    const [g, b] = params();
+    const [g, b, w] = params();
     // 다른 스크롤 연출처럼 살짝 부드럽게 따라감
     eg = eg === null ? g : eg + (g - eg) * .18; if (Math.abs(g - eg) < .0005) eg = g;
     eb = eb === null ? b : eb + (b - eb) * .12; if (Math.abs(b - eb) < .0005) eb = b;
-    for (const v of views) drawView(v, eg, eb);
+    ew = ew === null ? w : ew + (w - ew) * .12; if (Math.abs(w - ew) < .0005) ew = w;
+    for (const v of views) drawView(v, eg, eb, ew);
     const dark = reduce.matches ? '' : smooth(DARK_START, DARK_END, scrollY / Math.max(1, innerHeight)).toFixed(4);
     if (dark !== lastDark) { lastDark = dark; if (dark) document.documentElement.style.setProperty('--kjy-dark', dark); else document.documentElement.style.removeProperty('--kjy-dark'); }
-    if (eg !== g || eb !== b) raf = requestAnimationFrame(frame);
+    if (eg !== g || eb !== b || ew !== w) raf = requestAnimationFrame(frame);
   }
   const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
   addEventListener('scroll', kick, { passive: true });
