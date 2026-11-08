@@ -39,7 +39,7 @@ const css=`
 @media (max-width:767px){.s3d-title{font-size:clamp(30px,8.4vw,48px)}.s3d-eye,.s3d-sub{font-size:16px}.s3d-box{width:calc(14px * 15.27);height:calc(14px * 3.1)}}
 .s3d-ch{display:inline-block;opacity:0;will-change:opacity,filter,transform;white-space:pre}
 /* 구슬 안내(oryzo grip-instruction과 같은 구성): 양끝이 흐려지는 넓은 U자 점선 + 그 위를 오가는 구슬 + 아래에서 같이 움직이는 손 */
-.s3d-hint{position:absolute;left:50%;bottom:calc(12svh + env(safe-area-inset-bottom,0px));width:clamp(220px,20vw,360px);transform:translateX(-50%);color:#efe9df;font-size:clamp(14px,1.05vw,20px);opacity:0;pointer-events:none}
+.s3d-hint{position:absolute;left:50%;bottom:calc(7svh + env(safe-area-inset-bottom,0px));width:clamp(220px,20vw,360px);transform:translateX(-50%);color:#efe9df;font-size:clamp(14px,1.05vw,20px);opacity:0;pointer-events:none}
 .s3d-wheel{display:block;width:100%;height:auto;overflow:visible;-webkit-mask-image:linear-gradient(90deg,transparent,#000 50%,transparent);mask-image:linear-gradient(90deg,transparent,#000 50%,transparent)}
 .s3d-wheel path{fill:none;stroke:currentColor;stroke-width:.25;stroke-dasharray:1 1;opacity:.6;animation:s3dDash 1s linear infinite}
 .s3d-wheel circle{fill:currentColor}
