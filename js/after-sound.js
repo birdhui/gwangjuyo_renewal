@@ -178,6 +178,7 @@ function init() {
       rollS = jump || reduced || rollS < 0 ? rollT : mix(rollS, rollT, 1 - Math.exp(-4.5 * dt));
       if (Math.abs(rollS - rollT) < .0002) rollS = rollT;
       const roll = rollS;
+      window.kjyScrollCue?.gate('beauty', smooth(range(roll, .02, .18))); // '스크롤하여 내려가기'는 구슬이 구르기 시작하면서 나타난다
       const day = smooth(range(p, .66, .8));
       const outroFade = 1; // 아이보리 화면은 끝까지 그대로 두고, 섹션이 위로 밀려 올라가며 다음 섹션과 경계가 보이게 넘어간다
       // The rotated square's bounding box changes every frame; use its layout width.
@@ -216,6 +217,7 @@ function init() {
         set(beauty, '--bt-cap', (a * introFade).toFixed(3)); }
     } else {
       document.body.classList.remove('beauty-light');
+      window.kjyScrollCue?.gate('beauty', shownScroll < by ? 0 : 1);
     }
 
     const cupZone = nearPeople || nearReviews || (shownScroll > py && shownScroll < gy + viewport * (CUP_GALLERY_FADE + .2));

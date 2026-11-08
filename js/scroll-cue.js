@@ -42,5 +42,13 @@
       const last = Math.max(1, state.chars.length - 1);
       state.chars.forEach((c, i) => { c.style.opacity = fit(r, i / last * .3, .7 + i / last * .3).toFixed(3); });
     },
+    // 장면이 안내를 숨기거나 보이게 하는 값(0~1, 이름별). 바뀔 때만 'kjy:cue'로 알린다.
+    gates: {},
+    gate(name, v) {
+      v = Math.round(Math.max(0, Math.min(1, v)) * 1000) / 1000;
+      if (this.gates[name] === v) return;
+      this.gates[name] = v;
+      dispatchEvent(new Event('kjy:cue'));
+    },
   };
 })();
