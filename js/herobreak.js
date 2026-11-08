@@ -1,5 +1,5 @@
 /* 광주요 — 히어로 소리잔이 그 자리에서 그대로 깨진다 (breakwheel.js의 조각 계산을 그대로 따른다) */
-import*as THREE from"three";import{curT,rawT,clamp,fit,sm,ease,crackAt,CRACK,POP,FALL}from"./timeline.js?v=20261108-r55";
+import*as THREE from"three";import{curT,rawT,clamp,fit,sm,ease,crackAt,CRACK,POP,FALL}from"./timeline.js?v=20261108-r56";
 const KS=44,UMAX=1.08,ERP=1.5,UP=new THREE.Vector3(0,1,0),qI=new THREE.Quaternion;
 const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const BODY=new THREE.Color().setRGB(.935,.915,.88);

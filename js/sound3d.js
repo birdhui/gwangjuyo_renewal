@@ -289,7 +289,7 @@ function frame(now){
   root.classList.toggle("is-live",on);
   /* 오른쪽 레일(스크롤바): 마지막 칸이 3D 공간으로 화면 전체가 될 때 함께 서서히 사라지고, 암전이 끝나 다음 섹션으로 넘어갈 때 다시 나타난다 */
   railVis(on?1-io(fit(we,2.35,3.05))*(1-sm(fit(we,10.85,11.4))):1);
-  if(!on){if(playing){playing=false;syncSound()}setHintVar(0);return}
+  if(!on){if(playing){playing=false;syncSound()}return}
   size();
   /* 1) 갤러리 칸 → 화면 전체 */
   const mobile=W<768,imgH=mobile?Math.min(H*.8,W*1.1):H*.8,imgW=imgH*.7727;
@@ -363,13 +363,11 @@ function frame(now){
   reveal(e2,fit(we,7.4,8.0),fit(we,9.5,10.0),.5);
   reveal(t2,fit(we,7.5,8.2),fit(we,9.5,10.1));
   reveal(s2,fit(we,7.7,8.4),fit(we,9.55,10.1),.4);
-  const h=sm(fit(we,7.9,8.4))*(1-sm(fit(we,9.4,9.9)));hint.style.opacity=h.toFixed(3);soundBtn.style.opacity=h.toFixed(3);if(h>0)swayHint(now);setHintVar(h);
+  const h=sm(fit(we,7.9,8.4))*(1-sm(fit(we,9.4,9.9)));hint.style.opacity=h.toFixed(3);soundBtn.style.opacity=h.toFixed(3);if(h>0)swayHint(now);
   black.style.opacity=B.toFixed(3);
   syncSound();
 }
-let hintW=0,hintVar=-1;
-// '스크롤하여 내려가기'(script.js)는 구슬 안내가 나타나는 만큼 사라진다
-function setHintVar(h){const v=Math.round(h*1000)/1000;if(v===hintVar)return;hintVar=v;document.documentElement.style.setProperty("--s3d-hint",String(v))}
+let hintW=0;
 addEventListener("resize",()=>{hintW=0});
 function swayHint(now){
   if(!hintW)hintW=hint.offsetWidth;
