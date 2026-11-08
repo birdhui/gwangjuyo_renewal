@@ -113,7 +113,7 @@
   if (popEl) popEl.addEventListener('animationend', popDone2, { once: true });
   if (reduced) { graphic.classList.add('slg-go'); popDone2(); }
   else requestAnimationFrame(() => requestAnimationFrame(() => { graphic.classList.add('slg-go'); popAt = performance.now(); setTimeout(popDone2, 1100); }));
-  const SAFETY = 2.4;       // seconds: never hold the visitor longer than this (늦게 준비된 3D는 화면이 열린 뒤 나타난다)
+  const SAFETY = 8;         // seconds: never hold the visitor longer than this (로딩 화면은 히어로가 다 그려질 때까지 기다린다)
   function frame(now) {
     if (!start) start = last = now;
     const t = (now - start) / 1000;

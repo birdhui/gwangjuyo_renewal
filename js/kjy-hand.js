@@ -239,6 +239,7 @@ function waitFor(test, ms = 60000) {
   if (!D) return;
   let scene = D.cup; while (scene.parent) scene = scene.parent;
 
+  await window.__kjyHeroReady;   // 히어로가 다 그려진 뒤에 손 모델(1.6MB)을 받아 해석한다
   const gltf = await new GLTFLoader().loadAsync('assets/hand/kjy-hand.glb?v=20261108-grip2');
   const root = gltf.scene;
   let mesh = null; root.traverse(o => { if (!mesh && o.isSkinnedMesh) mesh = o; });
