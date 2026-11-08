@@ -181,3 +181,22 @@ html:root body .hero-rail.hero-rail{opacity:var(--rail-vis,1)!important}
 html.rail-off .rail-scroll{display:none!important}
 /* r35: 풍경 섹션 제목(잔 하나로 달라지는 풍경) 약 10% 축소 */
 html body .scenery-heading{font-size:clamp(20px,2.25vw,43px)}
+/* r36: 쓰임으로 이어지는 아름다움 — 구슬 축소 + 외곽 빛(림)·바닥 빛그림자, 제목 빛 번짐(oryzo sustainability pulse)·잔물결 */
+html body #beauty .beauty-marble{width:min(70svh,70vw)!important}
+@media(max-width:767px){html body #beauty .beauty-marble{width:70vw!important}}
+#beauty .beauty-marble::before{inset:auto!important;left:-62%!important;width:224%!important;top:84%!important;height:36%!important;border-radius:0!important;transform:none!important;filter:blur(1.2cqw)!important;background:
+ radial-gradient(ellipse 16% 4.5% at 52% 20%,rgba(255,242,214,.72),rgba(255,242,214,0) 72%),
+ radial-gradient(ellipse 32% 22% at 62% 30%,rgba(255,222,176,.32),rgba(255,222,176,0) 74%),
+ radial-gradient(ellipse 20% 26% at 50% 60%,rgba(220,200,170,.10),rgba(220,200,170,0) 70%),
+ radial-gradient(ellipse 34% 13% at 33% 24%,rgba(0,0,0,.58),rgba(0,0,0,0) 72%)!important}
+#beauty .beauty-marble::after{content:'';position:absolute;inset:-10%;z-index:2;border-radius:50%;pointer-events:none;mix-blend-mode:screen;
+ background:radial-gradient(circle closest-side at 50% 50%,rgba(255,236,204,0) 79.5%,rgba(255,242,218,.45) 82.2%,rgba(255,246,226,.85) 83.2%,rgba(255,230,192,.32) 84.4%,rgba(255,214,168,.14) 88%,rgba(255,206,160,.04) 94%,rgba(255,206,160,0) 100%);
+ -webkit-mask-image:linear-gradient(225deg,#000 18%,rgba(0,0,0,.4) 52%,rgba(0,0,0,.14) 100%);mask-image:linear-gradient(225deg,#000 18%,rgba(0,0,0,.4) 52%,rgba(0,0,0,.14) 100%)}
+html body .beauty-title-ripple{position:absolute;inset:.6em .9em;z-index:3;pointer-events:none;white-space:nowrap;color:#fffaf0;opacity:var(--rp,0);
+ text-shadow:0 0 .06em rgba(255,246,228,.95),0 0 .24em rgba(255,214,160,.55);filter:url(#kjy-ripple-f);
+ -webkit-mask-image:linear-gradient(to right,rgba(0,0,0,0) calc(var(--rl,120)*1% - 1.5%),#000 calc(var(--rl,120)*1%),rgba(0,0,0,0) calc(var(--ra,150)*1%)),repeating-linear-gradient(104deg,rgba(0,0,0,.18) 0,rgba(0,0,0,.18) .1em,#000 .16em,rgba(0,0,0,.18) .24em,rgba(0,0,0,.18) .42em);
+ mask-image:linear-gradient(to right,rgba(0,0,0,0) calc(var(--rl,120)*1% - 1.5%),#000 calc(var(--rl,120)*1%),rgba(0,0,0,0) calc(var(--ra,150)*1%)),repeating-linear-gradient(104deg,rgba(0,0,0,.18) 0,rgba(0,0,0,.18) .1em,#000 .16em,rgba(0,0,0,.18) .24em,rgba(0,0,0,.18) .42em);
+ -webkit-mask-size:100% 100%,1.2em 1.2em;mask-size:100% 100%,1.2em 1.2em;-webkit-mask-composite:source-in;mask-composite:intersect;animation:kjy-ripple 1.4s linear infinite}
+@keyframes kjy-ripple{from{-webkit-mask-position:0 0,0 0;mask-position:0 0,0 0}to{-webkit-mask-position:0 0,-1.2em .25em;mask-position:0 0,-1.2em .25em}}
+html body .beauty-sequence.is-light .beauty-title-ripple{display:none}
+@media(prefers-reduced-motion:reduce){html body .beauty-title-ripple{display:none}}
