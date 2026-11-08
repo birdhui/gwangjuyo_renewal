@@ -88,7 +88,7 @@ function slipMaps(s, streaks, swirl) {
   return { normal: tex(cn), rough: tex(cr), color: tex(cc, true) };
 }
 const CLAYMAP = slipMaps(512, 150);
-[CLAYMAP.normal, CLAYMAP.rough, CLAYMAP.color].forEach(t => t.repeat.set(1.5, 2.2));
+[CLAYMAP.normal, CLAYMAP.rough, CLAYMAP.color].forEach(t => t.repeat.set(2, 2.2));   // 둘레 방향 반복은 정수여야 한 바퀴 끝(u=1)과 시작(u=0)이 이어진다(1.5면 세로 경계선이 생김)
 const WET = new THREE.Color('#9d937f'), DRY = new THREE.Color('#e3ddd3'), GLAZE = new THREE.Color('#f3f1ec');
 const clayMat = new THREE.MeshPhysicalMaterial({
   color: WET.clone(), map: CLAYMAP.color, roughness: 1, roughnessMap: CLAYMAP.rough, normalMap: CLAYMAP.normal, normalScale: new THREE.Vector2(.55, .55),
