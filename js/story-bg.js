@@ -207,7 +207,7 @@ void main(){
   const mount = () => {
     const bs = document.querySelector('#beauty .beauty-sticky'); if (bs && window.__kjyBgMount) window.__kjyBgMount(bs);
     const day = document.querySelector('#beauty .beauty-day'); if (!day || document.querySelector('.kjy-pine-shadow')) return;
-    for (const c of ['a', 'b']) { const d = document.createElement('div'); d.className = 'kjy-pine-shadow ' + c; d.setAttribute('aria-hidden', 'true'); day.after(d); }
+    for (const c of ['a', 'b', 'c']) { const d = document.createElement('div'); d.className = 'kjy-pine-shadow ' + c; d.setAttribute('aria-hidden', 'true'); day.after(d); }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
 })();

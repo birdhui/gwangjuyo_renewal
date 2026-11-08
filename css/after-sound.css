@@ -212,3 +212,9 @@ html body .hero-card .card-subtitle,html body .hero-card .card-subtitle>span{fon
 @media(min-width:1440px){html body .hero-card .card-subtitle,html body .hero-card .card-subtitle>span{font-size:calc(16px + 4*(100vw - 1440px)/480)!important}}
 @media(min-width:1920px){html body .hero-card .card-subtitle,html body .hero-card .card-subtitle>span{font-size:calc(20px + 4*(100vw - 1920px)/640)!important}}
 @media(min-width:2560px){html body .hero-card .card-subtitle,html body .hero-card .card-subtitle>span{font-size:calc(24px + 16*(100vw - 2560px)/1280)!important}}
+/* r45: 아름다움(낮) 소나무 그림자 — 왼쪽이 뭉개진 덩어리로 보이던 마스크 대신, 형태가 또렷한 오른쪽 가지만 쓰고(오른쪽 위),
+   왼쪽에는 같은 가지를 좌우 반전해 조금 작고 옅게 둔다(.c). 가지·솔잎 모양이 화면 전체에서 보이게. */
+html body .kjy-pine-shadow{-webkit-mask-image:url(../img/hero-bg-pine-clean.webp)!important;mask-image:url(../img/hero-bg-pine-clean.webp)!important;-webkit-mask-size:100% 100%!important;mask-size:100% 100%!important;aspect-ratio:780/700!important;width:64vw!important;inset:-7% -3% auto auto!important}
+html body .kjy-pine-shadow.b{width:70vw!important;inset:-4% -7% auto auto!important}
+html body .kjy-pine-shadow.c{-webkit-mask-image:url(../img/hero-bg-pine-clean-l.webp)!important;mask-image:url(../img/hero-bg-pine-clean-l.webp)!important;width:62vw!important;inset:-12% auto auto -4%!important;opacity:calc(var(--day-opacity,0)*.15)!important;filter:blur(9px)!important;transform-origin:4% 4%!important;animation-duration:9.5s!important;animation-delay:-5s!important}
+@media(max-width:767px){html body .kjy-pine-shadow{width:120vw!important}html body .kjy-pine-shadow.c{width:90vw!important}}
