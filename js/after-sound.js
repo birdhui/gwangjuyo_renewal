@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { createTitleLight } from './beauty-light.js?v=20261108-r53';
+import { createTitleLight } from './beauty-light.js?v=20261108-r64';
 
 const clamp = (v, min = 0, max = 1) => Math.min(max, Math.max(min, v));
 const range = (v, from, to) => clamp((v - from) / (to - from));
@@ -52,7 +52,7 @@ function init() {
   let rollS = -1;
   let fitW = 0, fitTitle = null, spinT = 0, peopleLive = false;
   let pulse = 0, pulseWin = false; // oryzo sustainability 'pulseRatio': 글자가 거의 다 드러나면 시간(2초)으로 빛이 한 번에 번진다
-  const litChars = []; let charGeo = null, charFont = 60, titleLight = null, ptrX = -9999, ptrY = -9999;
+  const litChars = []; let titleLight = null;
   // 사람들 섹션 글을 줄·글자 단위로 나눈다(제목 2줄 + 소개 2줄)
   const peopleLines = [];
   for (const el of [heading.querySelector('h2'), intro]) {
@@ -71,8 +71,6 @@ function init() {
   }
   let lastTime = performance.now();
   let raf = 0, swayLive = false;
-  let pointerGlow = 0;
-  let pointerTarget = 0;
   let cup = null;
   let renderer = null;
   let scene = null;
@@ -160,7 +158,6 @@ function init() {
     targetScroll = window.scrollY;
     const jump = Math.abs(targetScroll - shownScroll) > viewport * 3;
     shownScroll = reduced || jump ? targetScroll : mix(shownScroll, targetScroll, 1 - Math.exp(-8 * dt));
-    pointerGlow = mix(pointerGlow, pointerTarget, 1 - Math.exp(-7 * dt));
 
     const by = beauty.offsetTop;
     const py = people.offsetTop;
@@ -173,7 +170,7 @@ function init() {
 
     if (nearBeauty) {
       if (!cupLoading && !reduced && shownScroll > py - viewport * 2.5) loadCup(); // 다음 섹션 경계가 보이기 전에 미리 준비
-      if (fitW !== pageWidth && fitTitle) { fitTitle(); fitW = pageWidth; charGeo = null; titleLight.measure(); }
+      if (fitW !== pageWidth && fitTitle) { fitTitle(); fitW = pageWidth; titleLight.measure(); }
       const p = sectionProgress(beauty, shownScroll);
       const introFade = smooth(range(p, .035, .14));
       const rollT = smooth(range(p, .12, .65));
@@ -200,7 +197,6 @@ function init() {
       const titleRect = title.getBoundingClientRect();
       const wipe = clamp((x + width * 1.04 - titleRect.left) / Math.max(titleRect.width, 1), 0, 1.06) * 100; // 구슬 오른쪽 끝(지나간 뒤)부터 보인다
       set(title, '--wipe', `${wipe.toFixed(2)}%`);
-      set(title, '--hover-light', pointerGlow.toFixed(3));
       // oryzo 'sustainability'처럼: 구슬이 거의 다 지나가 글자가 거의 다 보이면(스크롤 위치가 아니라) 시간으로 2초 동안
       // 넓은 빛의 띠가 오른쪽에서 왼쪽으로 번지고, 글자 윤곽을 따라 빛이 흐른다(beauty-light.js).
       // 다시 위로 올라가 글자가 가려지면 처음 상태로 돌아가 다음에 또 번진다.
@@ -209,9 +205,7 @@ function init() {
       if (wipe >= 45) pulse = 0;
       else if (pulse > 0 || pulseWin) pulse = reduced ? 1 : Math.min(1, pulse + dt * .5);
       const night = 1 - smooth(range(day, .2, .6));
-      titleLight.render(pulse, night, titleRect.left + titleRect.width * wipe / 100, titleRect.width * .025);
-      tintNearChars(night);
-      if (pulse > 0 && pulse < 1) requestTick();
+      if (titleLight.render(pulse, night, titleRect.left + titleRect.width * wipe / 100, titleRect.width * .025)) requestTick();
       set(title, '--title-color', day > .55 ? '#211914' : '#ffedd7');
       beauty.classList.toggle('is-light', day > .55);
       // 머리글(로고·메뉴) 색은 다음 섹션의 위 경계가 머리글에 닿는 순간 바뀐다(oryzo처럼 섹션이 맞물릴 때)
@@ -310,7 +304,7 @@ function init() {
       set(galleryTrack, '--gallery-x', `${(-galleryTravel * progress).toFixed(1)}px`);
     }
 
-    if (swayLive || reviewMoving || peopleLive || Math.abs(shownScroll - targetScroll) > .2 || (rollS >= 0 && Math.abs(rollS - smooth(range(sectionProgress(beauty, shownScroll), .12, .65))) > .0002) || Math.abs(pointerGlow - pointerTarget) > .01) requestTick();
+    if (swayLive || reviewMoving || peopleLive || Math.abs(shownScroll - targetScroll) > .2 || (rollS >= 0 && Math.abs(rollS - smooth(range(sectionProgress(beauty, shownScroll), .12, .65))) > .0002)) requestTick();
   }
 
   function requestTick() { if (!raf) raf = requestAnimationFrame(draw); }
@@ -350,22 +344,8 @@ function init() {
     viewport = window.innerHeight; pageWidth = window.innerWidth;
     measureGallery(); resize3d(); requestTick();
   }, { passive: true });
-  beauty.addEventListener('pointermove', event => {
-    const r = title.getBoundingClientRect();
-    const dx = (event.clientX - (r.left + r.width / 2)) / Math.max(r.width / 2, 1);
-    const dy = (event.clientY - (r.top + r.height / 2)) / Math.max(r.height * 1.5, 1);
-    pointerTarget = smooth(1 - clamp(Math.hypot(dx, dy) / 1.5));
-    ptrX = event.clientX - r.left; ptrY = event.clientY - r.top;
-    set(title, '--mx', `${(event.clientX - r.left).toFixed(1)}px`);
-    set(title, '--my', `${(event.clientY - r.top).toFixed(1)}px`);
-    requestTick();
-  }, { passive: true });
-  beauty.addEventListener('pointerleave', () => { pointerTarget = 0; requestTick(); });
-  // 마우스 근처 빛 윤곽 층(글자를 밝게 살짝 번지게 해 글자 뒤에 깐다)
-  if (!title.querySelector('.beauty-title-edge')) {
-    const edge = document.createElement('span'); edge.className = 'beauty-title-edge'; edge.setAttribute('aria-hidden', 'true');
-    edge.textContent = title.querySelector('.beauty-title-lit').textContent; title.appendChild(edge);
-  }
+  // 마우스(호버): oryzo처럼 마우스가 지나간 자취를 따라 글자 윤곽선에 빛이 흐른다(beauty-light.js)
+  beauty.addEventListener('pointermove', event => { titleLight.pointer(event.clientX, event.clientY); requestTick(); }, { passive: true });
   // 빛을 글자 하나하나에 주기 위해, 보이는 제목(lit)을 글자 단위로 나눈다(배치는 그대로: 일반 inline span)
   const litSpan = title.querySelector('.beauty-title-lit');
   title.setAttribute('aria-label', litSpan.textContent);
@@ -381,21 +361,6 @@ function init() {
     const bot = document.createElement('p'); bot.className = 'beauty-caption'; bot.innerHTML = '정성껏 빚어낸 한 잔이<br>누군가의 식탁 위에 놓이고,<br>매일의 작은 순간을 함께합니다.';
     beautySticky.append(top, bot);
   }
-  const measureChars = () => {
-    const tr = title.getBoundingClientRect();
-    charGeo = litChars.map(c => { const r = c.getBoundingClientRect(); return { cx: r.left + r.width / 2 - tr.left, cy: r.top + r.height / 2 - tr.top }; });
-    charFont = parseFloat(getComputedStyle(title).fontSize) || 60;
-  };
-  // 마우스 근처 글자는 속이 살짝 가라앉고(--n) 뒤의 빛 윤곽 층이 드러난다
-  const tintNearChars = night => {
-    if (!charGeo || charGeo.length !== litChars.length) measureChars();
-    const R = charFont * 1.9;
-    litChars.forEach((c, i) => {
-      const g = charGeo[i];
-      const near = pointerGlow * smooth(1 - clamp(Math.hypot(ptrX - g.cx, ptrY - g.cy) / R));
-      c.style.setProperty('--n', (near * night).toFixed(3));
-    });
-  };
   // 제목 글자 크기: 화면 너비의 70%를 차지하도록
   fitTitle = () => {
     if (reduced) return;
