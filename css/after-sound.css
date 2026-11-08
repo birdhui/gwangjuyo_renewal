@@ -191,7 +191,7 @@ html body .beauty-sequence.is-light .beauty-title-ripple{display:none}
 #beauty.is-light .beauty-eyebrow,#beauty.is-light .beauty-caption{color:#211914}
 /* oryzo #sustainability-tagline / -desc 배치: 위 문구는 화면 위쪽(5vh + 여백), 아래 문구는 가운데가 화면 68% 지점. 줄 간격은 히어로 소개(.hero-copy p)와 같은 1.24 */
 #beauty .beauty-eyebrow{top:calc(5svh + 1.6667vw);font-size:clamp(13px,.95vw,18px);line-height:1.3;transform:translate(-50%,calc((1 - var(--bt-cap,0)) * 10px))}
-#beauty .beauty-caption{top:68svh;font-size:clamp(14px,1.05vw,20px);line-height:1.24;transform:translate(-50%,calc(-50% + (1 - var(--bt-cap,0)) * 10px))}
+#beauty .beauty-caption{top:68svh;font-size:clamp(14px,1.05vw,20px);line-height:var(--hero-body-lh);transform:translate(-50%,calc(-50% + (1 - var(--bt-cap,0)) * 10px))}
 @media(max-width:767px){#beauty .beauty-eyebrow{top:calc(5svh + 6.6667vw);font-size:12px}#beauty .beauty-caption{top:80svh;font-size:13px}}
 /* r45: 아름다움(낮) 소나무 그림자 — 왼쪽이 뭉개진 덩어리로 보이던 마스크 대신, 형태가 또렷한 오른쪽 가지만 쓰고(오른쪽 위),
    왼쪽에는 같은 가지를 좌우 반전해 조금 작고 옅게 둔다(.c). 가지·솔잎 모양이 화면 전체에서 보이게. */
