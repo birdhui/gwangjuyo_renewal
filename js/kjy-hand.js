@@ -63,7 +63,7 @@ function hookCups(scene) {
     const k = mat.customProgramCacheKey ? mat.customProgramCacheKey.bind(mat) : null;
     mat.customProgramCacheKey = () => (k ? k() : '') + '|kjy-xfade2';
     mat.transparent = true; mat.depthWrite = true; mat.depthFunc = THREE.LessEqualDepth;
-    mat.needsUpdate = true;
+    mat.needsUpdate = true; warm.compiled.delete(mat);   // 셰이더가 바뀌었으니 다시 미리 컴파일
     // 깊이 프리패스(색은 안 그림): 반투명 구간에서 잔 안쪽 면이 비치지 않게
     const pm = new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true });
     pm.onBeforeCompile = sh => pushVS(sh, rec.push);
@@ -89,9 +89,10 @@ function updateCups() {
    → 내부 해상도를 2배(고해상도 화면은 기기 배율 그대로, 최대 2)로 그리고 브라우저가 줄여 표시 = 외곽이 매끈해짐.
    번들이 창 크기 변경 때 배율을 되돌리면 다음 프레임에 다시 맞춘다. 긴 변은 4096px을 넘지 않게. */
 const SSAA = { renderer: null };
+const warm = { pending: false, next: 0, compiled: new WeakSet() };   // 1-d. 미리 올리기·미리 컴파일 상태
 function aaTarget(r) {
   const dpr = window.devicePixelRatio || 1;
-  let t = Q.has('ssaa') ? num('ssaa', 2) : Math.min(3, Math.max(2, dpr * 1.5));   // 기기 배율보다 1.5배 크게(최소 2, 최대 3) 그려 줄여 보이게 → 얕은 각도의 잔 테두리도 계단 없이
+  let t = Q.has('ssaa') ? num('ssaa', 2) : Math.min(3, Math.max(2, dpr));   // 1배 화면은 2배로 그려 줄여 보이고(계단 없음), 고해상도 화면은 기기 배율 그대로(이미 촘촘해 더 키우면 GPU만 무거워져 스크롤이 끊김)
   const el = r.domElement, w = el.clientWidth || innerWidth, h = el.clientHeight || innerHeight;
   t = Math.min(t, 4096 / Math.max(1, w, h));
   return Math.max(1, t);
@@ -113,8 +114,39 @@ function aaTarget(r) {
   let sc = d.cup; while (sc.parent) sc = sc.parent;
   const prev = sc.onBeforeRender;
   let n = 0;
-  sc.onBeforeRender = function (renderer) { if (prev) prev.apply(this, arguments); SSAA.renderer = renderer; if ((n++ % 20) === 0) footShade(sc); };
+  sc.onBeforeRender = function (renderer, scene, camera) { if (prev) prev.apply(this, arguments); SSAA.renderer = renderer; if ((n++ % 20) === 0) footShade(sc); warmScene(renderer, sc, camera); };
 })();
+/* ====================== 1-d. 미리 올리기·미리 컴파일 ======================
+   텍스처는 처음 그려지는 순간 GPU로 올라가고, 재질 셰이더는 처음 보이는 순간 컴파일된다
+   → 시리즈 섹션에 들어서 손·시리즈 잔이 처음 보일 때 화면이 크게 멈췄다(손 텍스처만 수백 ms).
+   브라우저가 쉬는 틈마다 아직 안 올라간 텍스처를 한 장씩 올리고(initTexture),
+   텍스처가 다 올라가면 숨은 물체까지 잠깐 보이게 해 아직 컴파일되지 않은 셰이더를 비동기로 컴파일한다(compileAsync). */
+const TEX_KEYS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap', 'clearcoatNormalMap', 'clearcoatRoughnessMap', 'sheenColorMap', 'sheenRoughnessMap', 'transmissionMap', 'thicknessMap', 'specularIntensityMap', 'specularColorMap', 'bumpMap'];
+
+function warmScene(renderer, scene, camera) {
+  if (warm.pending || performance.now() < warm.next) return;
+  warm.pending = true;
+  (window.requestIdleCallback || (f => setTimeout(f, 120)))(() => {
+    warm.pending = false;
+    const props = renderer.properties;
+    let tex = null, raw = false;
+    scene.traverse(o => {
+      if (!o.material) return;
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+        if (!warm.compiled.has(m)) raw = true;
+        for (const k of TEX_KEYS) { const t = m[k], im = t && t.isTexture && t.image; if (!tex && im && (im.width || im.videoWidth) && !props.get(t).__webglInit) tex = t; }
+      }
+    });
+    if (tex) { renderer.initTexture(tex); return; }                       // 한 번에 한 장(멈춤이 길어지지 않게)
+    if (raw) {
+      const hidden = []; scene.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+      try { renderer.compileAsync(scene, camera); } catch (e) { }
+      for (const o of hidden) o.visible = false;
+      scene.traverse(o => { if (o.material) for (const m of Array.isArray(o.material) ? o.material : [o.material]) warm.compiled.add(m); });
+    }
+    warm.next = performance.now() + 1500;                               // 새로 불러온 텍스처·재질이 생기면 다시 확인
+  }, { timeout: 1500 });
+}
 /* 잔 굽 바닥 테두리: 굽 아랫면의 둥근 모서리가 주변 빛을 받아 바닥 경계에 회색 선처럼 그려졌다.
    실제 도자기처럼 탁자에 닿는 굽 맨 아래(잔 높이의 약 2%)를 서서히 어둡게(접촉 음영) 해서 선이 보이지 않게 한다. */
 const footDone = new WeakSet();
@@ -174,7 +206,8 @@ const CUP_H = num('cuph', 0.115);
 const GRIP = new THREE.Vector3(num('hx', -0.2631), num('hy', 1.8853), num('hz', 0.0316));
 const FINGERS = ['thumb', 'f_index', 'f_middle', 'f_ring', 'f_pinky'];
 const RAD = { thumb: [0.0095, 0.0088, 0.0078], f_index: [0.0085, 0.0075, 0.0068], f_middle: [0.0088, 0.0078, 0.007], f_ring: [0.0083, 0.0074, 0.0066], f_pinky: [0.0075, 0.0068, 0.006] };
-const TAU_STEP = 0.025, TAU_N = 81;    // 손가락 진행값 τ: 0 편 손, 1 쥔 손, 2 호버(살짝 편 손)
+const TAU_STEP = 0.025, TAU_N = 81;
+const CURL0 = num('hcurl0', 0.35);   // 처음 올라올 때 손가락이 접혀 있는 정도(0 편 손 ~ 1 쥔 손)    // 손가락 진행값 τ: 0 편 손, 1 쥔 손, 2 호버(살짝 편 손)
 
 function waitFor(test, ms = 60000) {
   return new Promise((res, rej) => { const t0 = performance.now(); (function f() { const v = test(); if (v) return res(v); if (performance.now() - t0 > ms) return rej(new Error('timeout')); requestAnimationFrame(f); })(); });
@@ -206,14 +239,16 @@ function waitFor(test, ms = 60000) {
     kjyThick: { value: null }, kjyUseThick: { value: 0 },
     kjyWrap: { value: num('hwrap', 0.45) }, kjyWrapColor: { value: new THREE.Color(0.55, 0.19, 0.11) },
     kjyTransColor: { value: new THREE.Color(1.0, 0.32, 0.18) }, kjyTransScale: { value: num('htrans', 0.8) },
-    kjyTransPow: { value: 3.0 }, kjyTransDistort: { value: 0.25 }, kjyCavity: { value: num('hcav', 0.55) }
+    kjyTransPow: { value: 3.0 }, kjyTransDistort: { value: 0.25 }, kjyCavity: { value: num('hcav', 0.55) },
+    // 팔 사라짐: 손목(뷰 좌표)에서 팔꿈치 쪽으로 kjyArmFade.x~y만큼 가면 투명 → 잘린 팔 끝이 어디서도 보이지 않는다(oryzo처럼 손목 아래가 어둠에 녹음)
+    kjyWrist: { value: new THREE.Vector3() }, kjyArmDir: { value: new THREE.Vector3(0, -1, 0) }, kjyArmFade: { value: new THREE.Vector2(1e3, 2e3) }
   };
   skin.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, SSS);
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>
 uniform sampler2D kjyThick; uniform float kjyUseThick, kjyWrap, kjyTransScale, kjyTransPow, kjyTransDistort, kjyCavity;
-uniform vec3 kjyWrapColor, kjyTransColor;
+uniform vec3 kjyWrapColor, kjyTransColor, kjyWrist, kjyArmDir; uniform vec2 kjyArmFade;
 float kjyThin = 0.0; float kjyAO = 1.0;
 vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
   float ndl = dot( N, L.direction );
@@ -229,11 +264,13 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
 #endif
 ` + THREE.ShaderChunk.lights_fragment_begin.split('RE_Direct( directLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight );')
         .join('RE_Direct( directLight, geometryPosition, geometryNormal, geometryViewDir, geometryClearcoatNormal, material, reflectedLight );\n\t\treflectedLight.directDiffuse += kjySSS( directLight, geometryNormal, geometryViewDir, material.diffuseColor );'))
+      .replace('#include <dithering_fragment>', `#include <dithering_fragment>
+  gl_FragColor.a *= 1.0 - smoothstep( kjyArmFade.x, kjyArmFade.y, dot( - vViewPosition - kjyWrist, kjyArmDir ) );`)
       .replace('#include <aomap_fragment>', `#include <aomap_fragment>
   reflectedLight.directDiffuse *= mix( 1.0, kjyAO, kjyCavity );
   reflectedLight.directSpecular *= mix( 1.0, kjyAO, kjyCavity );`);
   };
-  skin.customProgramCacheKey = () => 'kjy-skin-2';
+  skin.customProgramCacheKey = () => 'kjy-skin-3';
   if (mesh.material) mesh.material.dispose();
   mesh.material = skin;
   // 실시간 그림자맵은 손가락 그림자를 흐릿하게 번지게 해 끈다 → Blender에서 구운 AO 사용
@@ -248,15 +285,14 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
   function loadHiRes(renderer) {
     if (hiResStarted) return; hiResStarted = true;
     const cap = renderer.capabilities;
-    const big = !Q.has('hlow') && cap.maxTextureSize >= 8192 && matchMedia('(pointer: fine)').matches && Math.min(screen.width, screen.height) >= 700 && (navigator.deviceMemory || 8) >= 4;
     const aniso = Math.min(8, cap.getMaxAnisotropy());
     const get = (u, srgb) => TL.loadAsync(u + TV).then(t => prep(t, srgb, aniso)).catch(() => null);
-    Promise.all([get('assets/hand/tex/diffuse.webp', true), get(big ? 'assets/hand/tex/normal.webp' : 'assets/hand/tex/normal-4k.webp', false), get('assets/hand/tex/orm.webp', false)]).then(([d, n, o]) => {
+    Promise.all([get('assets/hand/tex/diffuse.webp', true), get('assets/hand/tex/normal-4k.webp', false), get('assets/hand/tex/orm.webp', false)]).then(([d, n, o]) => {
       if (d) { skin.map = d; skin.userData.hiMap = true; }
       if (n) skin.normalMap = n;
       if (o) { skin.roughnessMap = o; skin.aoMap = o; SSS.kjyThick.value = o; SSS.kjyUseThick.value = 1; }
-      skin.needsUpdate = true;
-      window.__kjyHandTex = { diffuse: !!d, normal: n && n.image ? [n.image.width, n.image.height] : null, orm: !!o, big };
+      skin.needsUpdate = true; warm.compiled.delete(skin);   // 맵이 붙어 셰이더가 바뀜 → 다시 미리 컴파일
+      window.__kjyHandTex = { diffuse: !!d, normal: n && n.image ? [n.image.width, n.image.height] : null, orm: !!o };
     });
   }
 
@@ -275,6 +311,8 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
     const a = mixer.clipAction(c); a.play(); a.paused = true; a.time = 0; fAct[f] = a;
   }
   const bone = n => root.getObjectByName(n);
+  const wristBone = bone('DEF-handR'), elbowBone = bone('DEF-forearmR'), _w = new THREE.Vector3(), _el = new THREE.Vector3();
+  const ARM_FADE = [num('hfade0', 0.1), num('hfade1', 0.38)];   // 아래팔 길이 비율: 손목에서 이만큼 가면 사라지기 시작 → 다 사라짐
   const fb = {}; for (const f of FINGERS) fb[f] = [bone(`DEF-${f}01R`), bone(`DEF-${f}02R`), bone(`DEF-${f}03R`)];
 
   // ----- 충돌용: τ마다 손가락 마디 캡슐 표본점(손 모델 로컬 좌표)을 미리 계산 -----
@@ -314,7 +352,9 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
   F.multiplyScalar(0.25).sub(GRIP); F.y = 0; F.normalize();
   let EMAX = num('hemax', 0.03), EZ = num('hez', 0.06);
   { const a = THREE.MathUtils.degToRad(num('hfa', 255)); F.set(Math.cos(a), 0, Math.sin(a)); }
-  const offE = d => EMAX * sm(0, EZ, d);
+  // 최종 높이: 참고 포즈(굽을 손바닥 위에서 쥠)보다 LOW만큼 낮게 — 엄지·검지가 굽을 잡고 중지·약지·소지는 굽 아래에서 자연스럽게 접힌다(oryzo)
+  const LOW = num('hlowd', 0.03);
+  const offE = d => EMAX * sm(0, EZ, d - LOW);
   // 검증용: τ=1(쥔 손)에서 손가락 끝점(손 로컬)
   window.__kjyHandTip = () => { const o = {}; for (const f of FINGERS) { const k = (40 * 3 * SAMP + 3 * SAMP - 1) * 4; o[f] = [table[f][k], table[f][k + 1], table[f][k + 2]].map(v => +v.toFixed(4)); } return o; };
 
@@ -533,8 +573,8 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
       applySway(!reduced && swayGate > 0.001, dt, camera, swayGate);
     }
     const rise = sm(1.6, 3.4, b);                          // 아래에서 올라옴
-    const close = sm(2.7, 4.0, b) - sm(19.2, 20.3, b);     // 쥠 → (시리즈 끝) 폄
-    const sink = sm(19.9, 21.4, b);                        // 아래로 사라짐
+    const close = sm(2.7, 4.0, b) - sm(19.0, 20.0, b);     // 쥠 → (시리즈 끝) 폄
+    const sink = sm(19.6, 20.9, b);                        // 아래로 사라짐(잔이 풍경 상자 크기로 줄기 전에 끝남 → 작아진 손·팔이 보이지 않게)
     const show = rise > 0.001 && sink < 0.999;
     hand.visible = show;
     if (!show) { st.init = false; return; }
@@ -559,17 +599,17 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
     const dist = camPos.distanceTo(cbase);
     const vh = 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
     const dropW = vh * 0.62 + 0.16 * s;
-    const Dt = (Math.max((1 - rise) * (1 - rise), sink * sink) * dropW) / s;
+    const Dt = LOW + (Math.max((1 - rise) * (1 - rise), sink * sink) * dropW) / s;
 
     // 호버 목표(쥔 상태에서만)
     if (pointerDirty || pointer) { pointerDirty = false; pickFinger(s, renderer); }
     const gripped = clamp01((close - 0.9) / 0.1);
     for (const f of FINGERS) { const t = hoverT[f] * gripped; hover[f] = damp(hover[f], t, t > hover[f] ? 6 : 3, dt); }
-    const goal = {}; for (const f of FINGERS) goal[f] = clamp01(close) + hover[f] * 0.85;
+    const goal = {}; for (const f of FINGERS) goal[f] = CURL0 + (1 - CURL0) * clamp01(close) + hover[f] * 0.85;
 
     // 충돌 처리
     buildUnion();
-    if (!st.init) { st.d = Math.max(Dt, 0.4); for (const f of FINGERS) { st.tau[f] = 0; tauShow[f] = 0; } st.init = true; }
+    if (!st.init) { st.d = Math.max(Dt, 0.4); for (const f of FINGERS) { st.tau[f] = CURL0; tauShow[f] = CURL0; } st.init = true; }
     solve(Dt, goal);
     for (const f of FINGERS) { tauShow[f] = damp(tauShow[f], st.tau[f], 22, dt); fAct[f].time = tauShow[f]; }
     restAct.time = 1;
@@ -578,6 +618,13 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
     off.copy(GRIP).multiplyScalar(s).applyQuaternion(q);
     hand.position.copy(cbase).sub(off).addScaledVector(axis, -st.d * s).add(fwd.copy(F).multiplyScalar(offE(st.d) * s).applyQuaternion(q));
     hand.updateMatrixWorld(true);
+    if (wristBone && elbowBone) {
+      wristBone.getWorldPosition(_w); elbowBone.getWorldPosition(_el);
+      const lf = _w.distanceTo(_el);
+      SSS.kjyArmDir.value.subVectors(_el, _w).normalize().transformDirection(camera.matrixWorldInverse);
+      SSS.kjyWrist.value.copy(_w).applyMatrix4(camera.matrixWorldInverse);
+      SSS.kjyArmFade.value.set(lf * ARM_FADE[0], lf * ARM_FADE[1]);
+    }
     let mn = 1; for (const f of FINGERS) mn = Math.min(mn, tauShow[f]);
     skin.aoMapIntensity = 0.35 + 0.65 * clamp01(mn);
   };
