@@ -222,11 +222,7 @@ function init() {
       { const nav = document.querySelector('.site-nav'), nr = nav && nav.getBoundingClientRect(), hdr = nr && nr.height ? nr.top + nr.height / 2 : 32;
         document.body.classList.toggle('beauty-light', day > .55 && people.getBoundingClientRect().top > hdr); }
       // 제목 위·아래 작은 글: 빛이 번지기 시작하면 함께 서서히 나타난다
-      { const tr = title.getBoundingClientRect(), fs = parseFloat(title.style.fontSize) || charFont, pad = fs * .6;
-        const sr = beautySticky.getBoundingClientRect();
-        set(beauty, '--bt-top', `${(tr.top - sr.top + pad).toFixed(1)}px`);
-        set(beauty, '--bt-bot', `${(tr.bottom - sr.top - pad).toFixed(1)}px`);
-        const a = reduced ? (pulse > 0 ? 1 : 0) : smooth(range(pulse, .05, .45));
+      { const a = reduced ? (pulse > 0 ? 1 : 0) : smooth(range(pulse, .05, .45));
         set(beauty, '--bt-cap', (a * introFade).toFixed(3)); }
     } else {
       document.body.classList.remove('beauty-light');
