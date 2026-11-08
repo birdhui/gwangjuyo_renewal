@@ -229,3 +229,11 @@ html body .review-story,html body .editorial-gallery{z-index:36}
   html body .review-story .review-card{padding:.9375vw 0!important;opacity:var(--review-row-opacity,1)}
   html body .review-story .review-image{transform-origin:100% 0}
 }
+/* oryzo처럼 행 높이는 사진(22.5vw × 4:3)만으로 정해진다: 작성자 줄은 행 아래쪽에 겹쳐 붙이고(absolute), 글이 행을 늘리지 않게 */
+@media(min-width:768px){
+  html body .review-story .review-card{align-items:stretch!important}
+  html body .review-story .review-copy{position:relative;min-height:0}
+  html body .review-story .review-person{position:absolute;left:0;bottom:0;margin:0!important;padding-top:0!important}
+  html body .review-story .review-card blockquote{font-size:clamp(13px,1.39vw,28px)!important}
+}
+@media(min-width:768px){html body .review-story .review-image{min-height:0!important}}
