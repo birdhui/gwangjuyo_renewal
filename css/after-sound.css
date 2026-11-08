@@ -179,3 +179,5 @@ body.beauty-light .sc-scroll{color:var(--after-ink,#2a1d17)}
 body.beauty-light .sc-scroll>span::before{border-color:currentColor;opacity:.62}
 html:root body .hero-rail.hero-rail{opacity:var(--rail-vis,1)!important}
 html.rail-off .rail-scroll{display:none!important}
+/* r35: 풍경 섹션 제목(잔 하나로 달라지는 풍경) 약 10% 축소 */
+html body .scenery-heading{font-size:clamp(20px,2.25vw,43px)}
