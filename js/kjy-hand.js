@@ -94,9 +94,30 @@ function aaTarget(r) {
   const dpr = window.devicePixelRatio || 1;
   let t = Q.has('ssaa') ? num('ssaa', 2) : Math.min(3, Math.max(2, dpr));   // 1배 화면은 2배로 그려 줄여 보이고(계단 없음), 고해상도 화면은 기기 배율 그대로(이미 촘촘해 더 키우면 GPU만 무거워져 스크롤이 끊김)
   const el = r.domElement, w = el.clientWidth || innerWidth, h = el.clientHeight || innerHeight;
-  t = Math.min(t, 4096 / Math.max(1, w, h));
+  t = Math.min(t, 4096 / Math.max(1, w, h), window.__kjyResCap);
   return Math.max(1, t);
 }
+/* 성능에 맞춘 해상도 상한(__kjyResCap): 실제 프레임 간격을 재서 화면이 버벅이면(평균 22ms 넘게 1초 이상) 3D 캔버스 해상도 상한을 한 단계(0.25배)씩 낮춘다.
+   느린 기기에서도 스크롤이 끊기지 않게 하는 것이 우선, 빠른 기기는 그대로 2배(계단 없는 잔 외곽). 히어로 캔버스와 구슬 소리 장면(sound3d.js)이 함께 따른다. */
+window.__kjyResCap = 3;
+(function governor() {
+  let last = 0, ema = 16.7, slowFor = 0, holdUntil = 0;
+  (function tick(now) {
+    requestAnimationFrame(tick);
+    const dt = last ? now - last : 16.7; last = now;
+    if (dt > 250 || document.hidden || document.documentElement.classList.contains('is-loading')) { holdUntil = now + 1500; return; }   // 탭 전환·로딩 중에는 세지 않음
+    ema += (dt - ema) * 0.08;
+    if (now < holdUntil) return;
+    slowFor = ema > 22 ? slowFor + dt : 0;
+    if (slowFor > 1000) {
+      const cur = SSAA.renderer ? SSAA.renderer.getPixelRatio() : 2;
+      // 해상도를 끝까지 낮춰도 버벅이면, 휠 부드럽게 넘기기(smooth-scroll.js)를 끄고 브라우저 기본 스크롤로 돌린다(메인 스레드가 바빠도 스크롤은 움직이게)
+      if (Math.min(window.__kjyResCap, cur) <= 1) dispatchEvent(new Event('kjy:slow'));
+      window.__kjyResCap = Math.max(1, Math.min(window.__kjyResCap, cur) - 0.25);
+      slowFor = 0; holdUntil = now + 1500;                        // 바뀐 해상도가 자리 잡을 때까지 기다렸다 다시 판단
+    }
+  })(performance.now());
+})();
 (function aaLoop() {
   const r = SSAA.renderer;
   if (r) {
@@ -124,7 +145,7 @@ function aaTarget(r) {
 const TEX_KEYS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap', 'alphaMap', 'clearcoatNormalMap', 'clearcoatRoughnessMap', 'sheenColorMap', 'sheenRoughnessMap', 'transmissionMap', 'thicknessMap', 'specularIntensityMap', 'specularColorMap', 'bumpMap'];
 
 function warmScene(renderer, scene, camera) {
-  if (warm.pending || performance.now() < warm.next) return;
+  if (warm.pending || performance.now() < warm.next || document.documentElement.classList.contains('is-loading')) return;   // 로딩 중에는 첫 화면 준비를 방해하지 않게 쉰다
   warm.pending = true;
   (window.requestIdleCallback || (f => setTimeout(f, 120)))(() => {
     warm.pending = false;

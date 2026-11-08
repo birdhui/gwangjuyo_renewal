@@ -27,7 +27,7 @@
   const progressbar = document.getElementById('loading-progress');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const skip = /[?&](snap|noloader)\b/.test(location.search);
-  const MIN = 1.4;          // seconds for an empty → full cup at the fastest
+  const MIN = 0.9;          // seconds for an empty → full cup at the fastest
   const LEAVE = 1.6;        // seconds: the outline travels onto the hero cup, then hands over
   const clamp = v => Math.max(0, Math.min(1, v));
   const fit = (v, a, b, c = 0, d = 1, ease) => { let t = clamp((v - a) / (b - a)); if (ease) t = ease(t); return c + t * (d - c); };
@@ -113,16 +113,17 @@
   if (popEl) popEl.addEventListener('animationend', popDone2, { once: true });
   if (reduced) { graphic.classList.add('slg-go'); popDone2(); }
   else requestAnimationFrame(() => requestAnimationFrame(() => { graphic.classList.add('slg-go'); popAt = performance.now(); setTimeout(popDone2, 1100); }));
-  const SAFETY = 9;         // seconds: never hold the visitor longer than this
+  const SAFETY = 2.4;       // seconds: never hold the visitor longer than this (늦게 준비된 3D는 화면이 열린 뒤 나타난다)
   function frame(now) {
     if (!start) start = last = now;
     const t = (now - start) / 1000;
     if (!loader.classList.contains('is-leaving')) toTop();
-    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    const raw = (now - last) / 1000, dt = Math.min(.05, raw); last = now;
     if (start !== now) et += Math.min(dt, 1 / 30);
     const ready = (heroReady() && pageLoaded) || t > SAFETY || !window.WebGLRenderingContext;
     const target = ready ? 1 : Math.min(.96, realProgress());
-    if (!popping) shown = Math.min(target, shown + dt / MIN);
+    // 준비가 끝나면 실제 경과 시간으로 채운다(첫 3D를 그리느라 프레임이 드물어도 늦게 열리지 않게)
+    if (!popping) shown = Math.min(target, shown + (ready ? raw : dt) / MIN);
     if (!popping) drawWater(smooth(shown), t);
 
     // Enter.

@@ -244,7 +244,7 @@ const T0=new THREE.Vector3(0,1.02,0),T1=new THREE.Vector3(0,.56,0),UPv=new THREE
 const v3=new THREE.Vector3(),tgt=new THREE.Vector3();
 let we=-99,weS=null,lastT=0,playing=false,W=0,H=0,dpr=1,tryAt=0;
 function size(){
-  const w=innerWidth,h=innerHeight,d=Math.round(Math.max(1,Math.min(Math.min(3,Math.max(2,(devicePixelRatio||1)*1.5)),4096/Math.max(w,h,1)))*100)/100;/* 시리즈 잔과 같은 슈퍼샘플링(잔 외곽 계단 방지) */
+  const w=innerWidth,h=innerHeight,d=Math.round(Math.max(1,Math.min(Math.min(3,Math.max(2,(devicePixelRatio||1)*1.5)),4096/Math.max(w,h,1),window.__kjyResCap||3))*100)/100;/* 느린 기기는 kjy-hand.js의 해상도 상한을 따른다 *//* 시리즈 잔과 같은 슈퍼샘플링(잔 외곽 계단 방지) */
   if(w!==W||h!==H||d!==dpr){W=w;H=h;dpr=d;renderer.setPixelRatio(d);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
 }
 // 사진을 화면 가득(cover) 채웠을 때의 크기·위치

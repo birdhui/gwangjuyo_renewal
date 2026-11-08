@@ -34,7 +34,7 @@
     }
     return false;
   };
-  addEventListener('wheel', e => {
+  const onWheel = e => {
     if (e.ctrlKey || e.defaultPrevented || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
     if (getComputedStyle(document.body).overflowY === 'hidden') return; // 메뉴가 열려 페이지 스크롤이 잠긴 동안
     const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1);
@@ -44,7 +44,10 @@
     ease = WHEEL_EASE;
     finish();
     start(clamp((target ?? scrollY) + d, 0, maxY()));
-  }, { passive: false });
+  };
+  addEventListener('wheel', onWheel, { passive: false });
+  // 기기가 느려 화면이 계속 버벅이면(kjy-hand.js가 알림) 브라우저 기본 스크롤로: 기본 스크롤은 메인 스레드가 바빠도 움직인다
+  addEventListener('kjy:slow', () => removeEventListener('wheel', onWheel, { passive: false }), { once: true });
   // 메뉴 이동: 목표 위치(px)로 빠르고 부드럽게. done: 도착하거나 다른 입력으로 멈추면 한 번 불린다
   window.kjySmoothScroll = {
     to(y, done) {
