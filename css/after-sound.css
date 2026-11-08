@@ -117,9 +117,12 @@ body.beauty-light .hero-rail{color:var(--after-ink)}
 /* 첫 번째 사진 제목: 다른 사진 제목(.eg-title)과 같은 색·굵기·자간, 크기는 '한 손의 무게'와 같은 11.4cqh */
 #gallery .editorial-item figcaption{color:#2b1c13;font-family:Pretendard,var(--font-ko),sans-serif;font-weight:600;font-size:min(11.4cqh,9.6cqw);line-height:1.2;letter-spacing:-.06em;text-shadow:0 1px 14px rgba(255,248,238,.35)}
 /* 갤러리 스크롤 아이콘: 갤러리에 들어오면 아래 가운데에 서서히 나타난다(oryzo와 같이) */
-.eg-scroll{position:absolute;left:50%;bottom:22px;z-index:8;transform:translateX(-50%);display:flex;align-items:center;gap:8px;min-height:44px;color:#f7f1e6;font-size:13px;font-weight:600;white-space:nowrap;opacity:0;pointer-events:none}
+.eg-scroll{position:absolute;left:50%;bottom:22px;z-index:8;transform:translateX(-50%);display:flex;align-items:center;gap:8px;min-height:44px;color:#f7f1e6;font-size:13px;font-weight:600;white-space:nowrap;visibility:hidden;pointer-events:none}
 .eg-scroll>span{position:relative;width:25px;height:25px;display:grid;place-items:center}
-.eg-scroll>span::before{content:'';position:absolute;inset:0;border:2px dotted rgba(255,237,215,.62);border-radius:50%;animation:scroll-ring 10.5s linear infinite}
+.eg-scroll>span::before{content:'';position:absolute;inset:0;border:2px dotted rgba(255,237,215,.62);border-radius:50%;animation:scroll-ring 10.5s linear infinite;scale:var(--cue-ring,.5);opacity:var(--cue-ring-a,0)}
+/* 나타남·사라짐(scroll-cue.js): 화살표는 --cue-r만큼, 글자는 한 글자씩 */
+.eg-scroll>span i{filter:opacity(var(--cue-r,0))}
+.cue-text{font:inherit}
 /* 구슬: 크기 조금 더 축소(96svh·94vw → 84svh·82vw).
    부드럽게 구르도록 그림자는 돌지 않는 별도 층으로 분리하고(예전엔 그림자가 구슬과 함께 빙글 돌았다), 구슬 이미지만 회전한다. */
 html body #beauty .beauty-marble{width:min(84svh,82vw)!important;filter:none!important;container-type:inline-size}
@@ -154,7 +157,7 @@ html body .hero-focus-copy>p{font-weight:400!important}
 html body .sc-scroll{position:fixed;z-index:40;transition:color .5s ease}
 html body .s3d .s3d-scroll{display:none!important}
 body.beauty-light .sc-scroll{color:var(--after-ink,#2a1d17)}
-body.beauty-light .sc-scroll>span::before{border-color:currentColor;opacity:.62}
+body.beauty-light .sc-scroll>span::before{border-color:currentColor;opacity:calc(.62 * var(--cue-ring-a,0))}
 html:root body .hero-rail.hero-rail{opacity:var(--rail-vis,1)!important}
 html.rail-off .rail-scroll{display:none!important}
 /* r35: 풍경 섹션 제목(잔 하나로 달라지는 풍경) 약 10% 축소 */
