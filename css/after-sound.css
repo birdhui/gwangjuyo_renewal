@@ -172,3 +172,7 @@ html body .hero-copy .hero-subline{font-size:calc(24px + 16*(100vw - 2560px)/128
 html body .hero-focus-copy>p{font-size:calc(34.6667px + 21.3333*(100vw - 2560px)/1280)!important}
 html body .hero-card .card-subtitle>span{font-size:calc(24px + 16*(100vw - 2560px)/1280)!important}
 }
+/* r27: 풍경 갤러리 스크롤 안내(가운데 아래) · 3D 공간이 화면을 채울 때 오른쪽 레일(스크롤바)이 서서히 사라짐 */
+html body #scenery .sc-scroll{position:absolute;z-index:9}
+html:root body .hero-rail.hero-rail{opacity:var(--rail-vis,1)!important}
+html.rail-off .rail-scroll{display:none!important}

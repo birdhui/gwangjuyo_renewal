@@ -279,6 +279,8 @@ function thumbs(now){
   for(let i=0;i<t-1;i++){const x=i/(t-2),S=cubicInOut(fit(h,x*.2,.8+x*.2));imgs[i].style.transform=S>0?`translate3d(${(-S*innerWidth/2).toFixed(1)}px,0,0)`:"";}
 }
 requestAnimationFrame(thumbs);
+let railV=-1;
+function railVis(v){v=Math.round(v*1000)/1000;if(v===railV)return;railV=v;const R=document.documentElement;R.style.setProperty("--rail-vis",String(v));R.classList.toggle("rail-off",v<.05)}
 function frame(now){
   requestAnimationFrame(frame);
   const sc=document.getElementById("scenery");if(!sc)return;
@@ -291,6 +293,8 @@ function frame(now){
   const offset=G?G.offset:9,showSlide=offset<1.02;
   const on=showSlide&&raw>-2.6&&raw<11.4;   // 암전이 끝나면(아름다움 섹션 시작 전) 바로 비켜 준다
   root.classList.toggle("is-live",on);
+  /* 오른쪽 레일(스크롤바): 마지막 칸이 3D 공간으로 화면 전체가 될 때 함께 서서히 사라지고, 암전이 끝나 다음 섹션으로 넘어갈 때 다시 나타난다 */
+  railVis(on?1-io(fit(we,2.35,3.05))*(1-sm(fit(we,10.85,11.4))):1);
   if(!on){if(playing){playing=false;syncSound()}return}
   size();
   /* 1) 갤러리 칸 → 화면 전체 */
