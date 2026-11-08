@@ -8,6 +8,7 @@
 import*as THREE from"three";
 import{GLTFLoader}from"three/addons/loaders/GLTFLoader.js";
 import{RoomEnvironment}from"three/addons/environments/RoomEnvironment.js";
+import{createPineBackdrop}from"./pine-backdrop.js?v=20261108-r74";
 
 const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
 if(!reduced&&!window.__s3d){window.__s3d={};start()}
@@ -24,6 +25,7 @@ const css=`
 .s3d-bg{position:absolute;inset:0;overflow:hidden}
 .s3d-photo,.s3d-table{position:absolute;left:0;top:0;background-size:100% 100%;background-repeat:no-repeat;will-change:transform,filter,opacity;transform-origin:0 0}
 .s3d-photo{background-image:url(img/hero-bg-pine.jpg)}
+.s3d-pine{display:block;width:100%;height:100%;visibility:hidden}.s3d-pine.is-on{visibility:visible}
 .s3d-table{background-image:url(img/sound-table-top.jpg);opacity:0}
 .s3d-shade{position:absolute;inset:0;background:radial-gradient(ellipse 70% 62% at 50% 56%,rgba(0,0,0,0) 0%,rgba(0,0,0,.55) 100%);opacity:0}
 .s3d-gl{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -81,7 +83,7 @@ const css=`
 const st=document.createElement("style");st.textContent=css;document.head.appendChild(st);
 
 const root=document.createElement("div");root.className="s3d";root.setAttribute("role","region");root.setAttribute("aria-label","소리잔의 맑은 소리");
-root.innerHTML=`<div class="s3d-bg"><div class="s3d-photo"></div><div class="s3d-table"></div><div class="s3d-shade"></div></div>
+root.innerHTML=`<div class="s3d-bg"><div class="s3d-photo"><canvas class="s3d-pine"></canvas></div><div class="s3d-table"></div><div class="s3d-shade"></div></div>
 <div class="s3d-magtitle" aria-hidden="true"><div class="s3d-mt"><span>소</span><span>리</span></div></div>
 <canvas class="s3d-gl" aria-hidden="true"></canvas>
 <div class="s3d-mag" aria-hidden="true">
@@ -106,7 +108,7 @@ const magTitleChars=[...magT.querySelectorAll(".s3d-mt span")];
 const magItems=[".s3d-mi",".s3d-mb",".s3d-mm1",".s3d-mm2",".s3d-mmd span:nth-child(1)",".s3d-mmd span:nth-child(2)",".s3d-mn",".s3d-mct",".s3d-mcd span:nth-child(1)",".s3d-mcd span:nth-child(2)"].map(q=>mag.querySelector(q));
 const magRoll=mag.querySelector(".s3d-mbn i"),magBar=mag.querySelector(".s3d-mbar");
 const $=s=>root.querySelector(s);
-const photo=$(".s3d-photo"),table=$(".s3d-table"),shade=$(".s3d-shade"),canvas=$(".s3d-gl"),copy=$(".s3d-copy"),copy2=$(".s3d-copy2"),hint=$(".s3d-hint"),hintDot=$(".s3d-wheel-dot"),hintHand=$(".s3d-hand"),soundBtn=$(".s3d-sound"),black=$(".s3d-black");
+const pineCanvas=$(".s3d-pine"),pine=createPineBackdrop(pineCanvas),photo=$(".s3d-photo"),table=$(".s3d-table"),shade=$(".s3d-shade"),canvas=$(".s3d-gl"),copy=$(".s3d-copy"),copy2=$(".s3d-copy2"),hint=$(".s3d-hint"),hintDot=$(".s3d-wheel-dot"),hintHand=$(".s3d-hand"),soundBtn=$(".s3d-sound"),black=$(".s3d-black");
 // 글자 단위로 나누기(흐림 → 또렷 등장)
 const split=el=>{const t=el.textContent;el.setAttribute("aria-label",t);el.textContent="";return[...t].map(c=>{const s=document.createElement("span");s.className="s3d-ch";s.textContent=c;s.setAttribute("aria-hidden","true");el.appendChild(s);return s})};
 const box=$(".s3d-box"),veil=$(".s3d-veil");
@@ -126,7 +128,9 @@ scene.environmentIntensity=.46;
 const hemi=new THREE.HemisphereLight(0xffffff,0x6f6253,.45);scene.add(hemi);
 scene.add(new THREE.AmbientLight(0xffffff,.13));
 const dl=(c,i,p,sh)=>{const l=new THREE.DirectionalLight(c,i);l.position.set(...p);if(sh){l.castShadow=true;l.shadow.mapSize.set(2048,2048);l.shadow.bias=-.0004;l.shadow.normalBias=.02;l.shadow.radius=4;const s=l.shadow.camera;s.left=s.bottom=-3;s.right=s.top=3;s.near=1;s.far=30}scene.add(l);return l};
-dl(0xfff2df,.81,[-6,13.9,-1.2]);dl(0xfff6eb,.075,[-3,3,6]);dl(0xffffff,.15,[2.4,6,9]);const key=dl(0xfff1e0,4.8,[-5.9,7.54,4.55],true);
+dl(0xfff2df,.81,[-6,13.9,-1.2]);dl(0xfff6eb,.075,[-3,3,6]);dl(0xffffff,.15,[2.4,6,9]);const key=dl(0xfff1e0,4.8,[-5.9,7.54,4.55]);
+// 잔 그림자: 히어로처럼 바닥에서 왼쪽 뒤로 눕는다(오른쪽 앞에서 비추는 그림자 전용 빛 — 세기 0이라 잔 밝기는 그대로)
+dl(0xffffff,0,[5.9,7.54,4.55],true);
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(14,14),new THREE.ShadowMaterial({color:0x2a1a0c,opacity:.32}));ground.rotation.x=-Math.PI/2;ground.position.y=.03;ground.receiveShadow=true;scene.add(ground);
 const camera=new THREE.PerspectiveCamera(24.7,1,.05,80);
 
@@ -346,7 +350,9 @@ function frame(now){
      table.style.width=tw.toFixed(1)+"px";table.style.height=th.toFixed(1)+"px";table.style.transform=`translate3d(${tx.toFixed(1)}px,${ty.toFixed(1)}px,0)`}
     const blur=16*Math.pow(A,1.3),bright=1-.28*GR-.06*X;
     const fl=`blur(${blur.toFixed(1)}px) grayscale(${GR.toFixed(3)}) brightness(${bright.toFixed(3)})`;
-    photo.style.opacity=(1-sm(E)).toFixed(3);photo.style.filter=E>0||A>0?fl:"none";
+    photo.style.opacity=(1-sm(E)).toFixed(3);
+    // 배경 공간: 히어로와 같이 소나무가 바람에 흔들리고 벽 그림자가 일렁인다(사진이 보이는 동안만 그린다, 준비 전에는 정지 사진)
+    if(E<1){pine.draw(cr.bw,cr.bh,now/1000);if(pine.ready()&&!pineCanvas.classList.contains("is-on"))pineCanvas.classList.add("is-on")}photo.style.filter=E>0||A>0?fl:"none";
     table.style.opacity=sm(fit(E,.15,.85)).toFixed(3);table.style.filter=A>0||GR>0?fl:"none";
     shade.style.opacity=(.35*sm(E)*(1-GR)+.4*GR).toFixed(3);
     veil.style.opacity=(GR*(1-B)).toFixed(3);
