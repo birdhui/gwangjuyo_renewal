@@ -217,7 +217,16 @@ function init() {
       if (pulse > 0 && pulse < 1) requestTick();
       set(title, '--title-color', day > .55 ? '#211914' : '#ffedd7');
       beauty.classList.toggle('is-light', day > .55);
-      document.body.classList.toggle('beauty-light', day > .55 && shownScroll < py - viewport * .38);
+      // 머리글(로고·메뉴) 색은 다음 섹션의 위 경계가 머리글에 닿는 순간 바뀐다(oryzo처럼 섹션이 맞물릴 때)
+      { const nav = document.querySelector('.site-nav'), nr = nav && nav.getBoundingClientRect(), hdr = nr && nr.height ? nr.top + nr.height / 2 : 32;
+        document.body.classList.toggle('beauty-light', day > .55 && people.getBoundingClientRect().top > hdr); }
+      // 제목 위·아래 작은 글: 빛이 번지기 시작하면 함께 서서히 나타난다
+      { const tr = title.getBoundingClientRect(), fs = parseFloat(title.style.fontSize) || charFont, pad = fs * .6;
+        const sr = beautySticky.getBoundingClientRect();
+        set(beauty, '--bt-top', `${(tr.top - sr.top + pad).toFixed(1)}px`);
+        set(beauty, '--bt-bot', `${(tr.bottom - sr.top - pad).toFixed(1)}px`);
+        const a = reduced ? (pulse > 0 ? 1 : 0) : smooth(range(pulse, .05, .45));
+        set(beauty, '--bt-cap', (a * introFade).toFixed(3)); }
     } else {
       document.body.classList.remove('beauty-light');
     }
@@ -356,6 +365,12 @@ function init() {
   {
     const text = litSpan.textContent; litSpan.textContent = '';
     for (const ch of text) { const sp = document.createElement('span'); sp.className = 'bt-ch'; sp.textContent = ch; litSpan.appendChild(sp); if (ch.trim()) litChars.push(sp); }
+  }
+  const beautySticky = beauty.querySelector('.beauty-sticky');
+  if (!beautySticky.querySelector('.beauty-eyebrow')) {
+    const top = document.createElement('p'); top.className = 'beauty-eyebrow'; top.textContent = '100% 수공업 공정 제작';
+    const bot = document.createElement('p'); bot.className = 'beauty-caption'; bot.innerHTML = '정성껏 빚어낸 한 잔이<br>누군가의 식탁 위에 놓이고,<br>매일의 작은 순간을 함께합니다.';
+    beautySticky.append(top, bot);
   }
   const measureChars = () => {
     const tr = title.getBoundingClientRect();
