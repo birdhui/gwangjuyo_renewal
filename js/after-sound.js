@@ -6,6 +6,7 @@ const range = (v, from, to) => clamp((v - from) / (to - from));
 const smooth = v => { const t = clamp(v); return t * t * (3 - 2 * t); };
 const mix = (a, b, t) => a + (b - a) * t;
 const set = (element, name, value) => element.style.setProperty(name, value);
+const CUP_GALLERY_FADE = 1.1; // 갤러리가 화면을 덮은 뒤 잔이 사라지는 스크롤 길이(화면 높이 배수)
 
 function init() {
   const beauty = document.getElementById('beauty');
@@ -35,7 +36,7 @@ function init() {
   let railKey = '';
   const placeRail = () => {
     const top = people.getBoundingClientRect().top + window.scrollY - (cupRail.offsetParent ? cupRail.offsetParent.getBoundingClientRect().top + window.scrollY : 0);
-    const h = gallery.offsetTop - people.offsetTop + window.innerHeight;
+    const h = gallery.offsetTop - people.offsetTop + window.innerHeight * (window.innerWidth >= 1100 ? 1 + CUP_GALLERY_FADE : 1); // 갤러리 위에서 사라질 때까지 화면에 고정
     const key = `${Math.round(top)}|${Math.round(h)}`;
     if (key === railKey) return;
     railKey = key;
@@ -231,7 +232,8 @@ function init() {
       document.body.classList.remove('beauty-light');
     }
 
-    if (nearPeople || nearReviews) {
+    const cupZone = nearPeople || nearReviews || (shownScroll > py && shownScroll < gy + viewport * (CUP_GALLERY_FADE + .2));
+    if (cupZone) {
       if (!cupLoading && !reduced) loadCup();
       const p = sectionProgress(people, shownScroll);
       // oryzo(People all around the world love Oryzo)와 같은 타이밍:
@@ -267,7 +269,7 @@ function init() {
         ? 1 - smooth(range(shownScroll, ry - viewport * .85, ry - viewport * .10))
         : pageWidth < 1100
           ? 1 - smooth(range(shownScroll, ry - viewport * 1.35, ry - viewport * .85))
-          : 1 - smooth(range(shownScroll, gy - viewport * .73, gy - viewport * .18));
+          : 1 - smooth(range(shownScroll, gy + viewport * .05, gy + viewport * CUP_GALLERY_FADE)); // 갤러리가 화면을 덮어 잔이 가려진 뒤, 갤러리를 넘기며 서서히 사라진다
       const opacity = entering * leaving;
       cupVisual.classList.toggle('is-visible', opacity > .002);
       cupVisual.style.opacity = opacity.toFixed(4);
@@ -294,26 +296,30 @@ function init() {
       cupVisual.classList.remove('is-visible');
       cupVisual.style.opacity = '0';
     }
-    if (!(nearPeople || nearReviews)) peopleLive = false;
+    if (!cupZone) peopleLive = false;
 
     let reviewMoving = false;
     if (nearReviews) {
+      // oryzo TestimoniesTableItem과 같은 방식:
+      // i = 행 가운데가 화면 아래 끝에서 몇 화면 올라왔는지(0: 화면 아래 끝, .5: 화면 가운데)
+      // r = fit(i, .15, .45) → 내려갈수록 커지기만 하고(지나간 뒤에도 그대로 큰 상태), 다시 올려야만 작아진다.
+      // 행 전체는 화면 위쪽으로 올라가며(i .55 → .85) 흐려진다. 사진 크기 변화는 transform이라 위아래 행에 영향이 없다.
       reviewCards.forEach(card => {
         const rect = card.getBoundingClientRect();
-        const rowCenter = rect.top + rect.height / 2;
-        const distance = Math.abs(rowCenter - viewport * .5);
-        const t = clamp(1 - distance / (viewport * .62));
-        const goal = t * t * t * (t * (t * 6 - 15) + 10);
+        const i = (viewport - (rect.top + rect.height / 2)) / viewport;
+        const goal = smooth(range(i, .15, .45));
         const prev = card._rf == null ? goal : card._rf;
-        const f = jump || reduced ? goal : mix(prev, goal, 1 - Math.exp(-5 * dt));
+        const f = jump || reduced ? goal : mix(prev, goal, 1 - Math.exp(-8 * dt));
         card._rf = f;
         if (Math.abs(f - goal) > .001) reviewMoving = true;
-        set(card, '--review-opacity', (.22 + .78 * f).toFixed(3));
+        const rowFade = 1 - .8 * range(i, .55, .85);
+        set(card, '--review-row-opacity', rowFade.toFixed(3));
+        set(card, '--review-opacity', (.2 + .8 * f).toFixed(3));
         set(card, '--review-blur', '0px');
-        set(card, '--review-y', `${((1 - f) * 14).toFixed(1)}px`);
-        set(card, '--review-image-opacity', (.25 + .75 * f).toFixed(3));
+        set(card, '--review-y', '0px');
+        set(card, '--review-image-opacity', (.2 + .8 * f).toFixed(3));
         set(card, '--review-image-gray', (1 - f).toFixed(3));
-        set(card, '--review-image-scale', (.78 + .22 * f).toFixed(4));
+        set(card, '--review-image-scale', (.8 + .2 * f).toFixed(4));
       });
     }
 

@@ -221,3 +221,11 @@ html body .kjy-pine-shadow.c{-webkit-mask-image:url(../img/hero-bg-pine-clean-l.
 
 /* 사람들 섹션 소개 문구 굵기 400 */
 html body #people .people-intro{font-weight:400}
+
+/* 리뷰·갤러리를 잔(.kjy-cup-rail, z 35)보다 앞에: 잔은 리뷰 목록과 갤러리 뒤에 놓인다 */
+html body .review-story,html body .editorial-gallery{z-index:36}
+/* 리뷰 행: oryzo testimonies-table-item과 같은 높이(위아래 여백 1em = 0.9375vw, 사진 22.5vw × 4:3) */
+@media(min-width:768px){
+  html body .review-story .review-card{padding:.9375vw 0!important;opacity:var(--review-row-opacity,1)}
+  html body .review-story .review-image{transform-origin:100% 0}
+}
