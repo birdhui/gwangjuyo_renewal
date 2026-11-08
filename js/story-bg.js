@@ -198,14 +198,13 @@ void main(){
     + '.beauty-pine{display:none!important}'
     + '.kjy-pine-shadow{position:absolute;inset:-6% -4% auto auto;width:min(110vw,1700px);aspect-ratio:1300/700;pointer-events:none;z-index:1;opacity:calc(var(--day-opacity,0)*.2);background:#3b2a1c;'
     +   '-webkit-mask:url(img/hero-bg-pine-branch.webp) right top/100% 100% no-repeat;mask:url(img/hero-bg-pine-branch.webp) right top/100% 100% no-repeat;filter:blur(7px);transform-origin:96% 4%;animation:kjy-pine-sway 7.5s ease-in-out infinite}'
-    + '.kjy-pine-shadow.b{opacity:calc(var(--day-opacity,0)*.1);filter:blur(13px);animation-duration:11s;animation-delay:-3.2s;inset:-2% -8% auto auto}'
     + '@keyframes kjy-pine-sway{0%,100%{transform:rotate(0deg) translate3d(0,0,0)}22%{transform:rotate(.9deg) translate3d(-6px,3px,0)}48%{transform:rotate(-.5deg) translate3d(4px,-2px,0)}71%{transform:rotate(1.3deg) translate3d(-9px,5px,0)}}'
     + '@media (max-width:767px){.beauty-marble{width:94vw!important}.kjy-pine-shadow{width:200vw}}';
   document.head.appendChild(st);
   const mount = () => {
     const bs = document.querySelector('#beauty .beauty-sticky'); if (bs && window.__kjyBgMount) window.__kjyBgMount(bs);
     const day = document.querySelector('#beauty .beauty-day'); if (!day || document.querySelector('.kjy-pine-shadow')) return;
-    for (const c of ['a', 'b', 'c']) { const d = document.createElement('div'); d.className = 'kjy-pine-shadow ' + c; d.setAttribute('aria-hidden', 'true'); day.after(d); }
+    const shadow = document.createElement('div'); shadow.className = 'kjy-pine-shadow'; shadow.setAttribute('aria-hidden', 'true'); day.after(shadow);
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
 })();

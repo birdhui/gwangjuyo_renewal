@@ -13,9 +13,7 @@ st.textContent=
 +'html body .review-card em{color:#8fa9c4!important}'
 /* 리뷰 문장 글자 크기 줄임: 데스크톱 1440px 기준 28px → 20px, 모바일 390px 기준 16px → 15px */
 +'@media(min-width:768px){html body .review-card blockquote{font-size:clamp(16px,1.39vw,28px)!important}}'
-+'@media(max-width:767px){html body .review-card blockquote{font-size:clamp(14px,3.8vw,18px)!important}}'
-/* 아이보리 배경의 소나무 그림자는 하나만(겹쳐 보이던 두 번째 층 숨김) */
-+'html body .kjy-pine-shadow.b{display:none!important}';
++'@media(max-width:767px){html body .review-card blockquote{font-size:clamp(14px,3.8vw,18px)!important}}';
 (document.head||document.documentElement).appendChild(st);
 /* 3D 모델(.glb)은 로딩 그림의 등장이 끝난 뒤 읽는다(등장 중 메인 스레드가 막히지 않게).
    base64 풀기는 브라우저 기본 기능(data: URL)으로 빠르게. */
