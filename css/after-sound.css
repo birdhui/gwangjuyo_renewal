@@ -177,9 +177,9 @@ html body #beauty .beauty-marble{width:min(62svh,62vw)!important}
 #beauty .beauty-eyebrow{top:calc(5svh + 1.6667vw);font-size:clamp(13px,.95vw,18px);line-height:1.3;transform:translate(-50%,calc((1 - var(--bt-cap,0)) * 10px))}
 #beauty .beauty-caption{top:68svh;font-size:clamp(14px,1.05vw,20px);line-height:var(--hero-body-lh);transform:translate(-50%,calc(-50% + (1 - var(--bt-cap,0)) * 10px))}
 @media(max-width:767px){#beauty .beauty-eyebrow{top:calc(5svh + 6.6667vw);font-size:12px}#beauty .beauty-caption{top:80svh;font-size:13px}}
-/* r45: 아름다움(낮) 소나무 그림자 — 왼쪽이 뭉개진 덩어리로 보이던 마스크 대신, 형태가 또렷한 오른쪽 가지 하나만 오른쪽 위에 둔다 */
-html body .kjy-pine-shadow{-webkit-mask-image:url(../img/hero-bg-pine-clean.webp)!important;mask-image:url(../img/hero-bg-pine-clean.webp)!important;-webkit-mask-size:100% 100%!important;mask-size:100% 100%!important;aspect-ratio:780/700!important;width:64vw!important;inset:-7% -3% auto auto!important}
-@media(max-width:767px){html body .kjy-pine-shadow{width:120vw!important}}
+/* 아름다움(낮) 소나무 그림자 — 가지 하나(왼쪽 끝까지 잘림 없이 이어진 가지)만 오른쪽 위에 둔다 */
+html body .kjy-pine-shadow{-webkit-mask-image:url(../img/hero-bg-pine-right.webp)!important;mask-image:url(../img/hero-bg-pine-right.webp)!important;-webkit-mask-size:100% 100%!important;mask-size:100% 100%!important;aspect-ratio:900/700!important;width:74vw!important;inset:-7% -3% auto auto!important}
+@media(max-width:767px){html body .kjy-pine-shadow{width:138vw!important}}
 
 /* 사람들 섹션 소개 문구 굵기 400 */
 html body #people .people-intro{font-weight:400}
