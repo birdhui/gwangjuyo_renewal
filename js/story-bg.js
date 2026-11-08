@@ -240,9 +240,7 @@ void main(){
     + 'html.kjy-people-on .kjy-people-bg{visibility:visible}'
     + 'html.kjy-people-on :is(.people-story,.review-story,.editorial-gallery,.editorial-sticky){background:transparent!important}'
     + '.people-cup-visual{left:0!important;top:0!important;width:100vw!important;height:100svh!important;transform:none!important}'
-    + '.people-heading,.people-intro{opacity:1!important;filter:none!important;transform:translate3d(0,var(--people-title-y,0px),0)!important}'
-    + '.people-intro{transform:translate3d(0,var(--people-intro-y,0px),0)!important}'
-    + '.people-ch{display:inline-block;white-space:pre;opacity:0;will-change:opacity,filter,transform}';
+    + '.people-ch{display:inline-block;white-space:pre;opacity:0;will-change:opacity}';
   document.head.appendChild(st);
   const mount = () => { if (document.querySelector('.kjy-people-bg') || !document.body) return; const el = document.createElement('div'); el.className = 'kjy-people-bg'; el.setAttribute('aria-hidden', 'true'); const sb = document.querySelector('.kjy-story-bg'); if (sb) sb.after(el); else document.body.prepend(el); };
   let on = null, lastG = '';
@@ -270,7 +268,7 @@ void main(){
   'use strict';
   const st = document.createElement('style');
   st.textContent = '@media (min-width:768px){'
-    + '.review-story{padding:10svh 3.125vw 8svh!important}'
+    + '.review-story{padding:0 3.125vw 8svh!important}' /* oryzo: 리뷰 목록은 제목 화면 바로 아래에서 시작 */
     + '.reviews-head{grid-template-columns:1fr auto 1fr!important;align-items:center!important;padding-bottom:2svh!important;font-size:clamp(12px,.9vw,17px)!important}'
     + '.reviews-head p{text-align:center;color:inherit!important;display:flex;gap:1.6em;align-items:center;white-space:nowrap}'
     + '.reviews-head p .kjy-rs{letter-spacing:.12em}'

@@ -227,30 +227,20 @@ function init() {
     const cupZone = nearPeople || nearReviews || (shownScroll > py && shownScroll < gy + viewport * (CUP_GALLERY_FADE + .2));
     if (cupZone) {
       if (!cupLoading && !reduced) loadCup();
-      const p = sectionProgress(people, shownScroll);
       // oryzo(People all around the world love Oryzo)와 같은 타이밍:
       // 섹션 위 경계가 화면 아래에서 25% 올라온 순간부터 제목이 왼쪽 글자부터 차례로 나타나고,
       // 경계가 화면 위쪽 약 22% 지점에 왔을 때 제목이 다 보인다. 오른쪽 소개 글은 제목 뒤를 이어 섹션이 화면을 다 채울 때까지 나타난다.
+      // 섹션이 화면을 채운 뒤에는(oryzo처럼) 제목·소개 글이 섹션과 함께 그대로 위로 스크롤되어 사라지고, 리뷰 목록이 바로 이어진다.
       const enter = (shownScroll - (py - viewport)) / viewport; // 0: 경계가 화면 아래 끝, 1: 섹션이 화면을 가득 채움
-      const lift = Math.min(0, .3 - p) * 1.15 * viewport;
-      set(heading, '--people-title-y', `${lift.toFixed(1)}px`);
-      set(intro, '--people-intro-y', `${lift.toFixed(1)}px`);
-      const nL = peopleLines.length;
       const titleN = (peopleLines[0]?.length || 0) + (peopleLines[1]?.length || 0);
       const introN = Math.max(1, peopleLines.slice(2).reduce((n, l) => n + l.length, 0));
       let ti = 0, ii = 0;
       peopleLines.forEach((chars, k) => {
-        const n = Math.max(1, chars.length - 1);
-        chars.forEach((c, ci) => {
-          const g = ci / n;
+        chars.forEach(c => {
           let a;
           if (k < 2) { a = clamp((enter - (.25 + .28 * ti / Math.max(1, titleN - 1))) / .25); ti++; }
           else { a = clamp((enter - (.5 + .3 * ii / Math.max(1, introN - 1))) / .2); ii++; }
-          const b = smooth(range(p, .66 + (nL - 1 - k) * .055 + (1 - g) * .05, .66 + (nL - 1 - k) * .055 + (1 - g) * .05 + .09));
-          const o = a * (1 - b);
-          c.style.opacity = o.toFixed(3);
-          c.style.filter = b <= .001 ? 'none' : `blur(${(b * .25).toFixed(3)}em)`;
-          c.style.transform = b <= .001 ? 'none' : `translate3d(0,${(-b * .2).toFixed(3)}em,0)`;
+          c.style.opacity = a.toFixed(3);
         });
       });
       // 잔: 섹션 경계가 보일 때부터 이미 섹션 화면의 정가운데에 놓여 섹션과 함께 올라오고,
@@ -327,11 +317,11 @@ function init() {
   window.addEventListener('pointermove', () => { if (cupVisual.classList.contains('is-visible')) requestTick(); }, { passive: true });
   window.addEventListener('scroll', requestTick, { passive: true });
 
-  // '쓰임으로 이어지는 아름다움' 끝 ↔ '한 잔을 곁에 둔…' 시작 경계: 휠 한 칸씩 화면이 딱딱 끊겨 내려가지 않도록
+  // '쓰임으로 이어지는 아름다움' 끝 ↔ '한 잔을 곁에 둔…' ↔ 리뷰 시작: 휠 한 칸씩 화면이 딱딱 끊기지 않도록(내려갈 때·올라올 때 모두)
   // 이 구간에서만 휠 스크롤을 관성 있게(목표 위치를 부드럽게 따라가도록) 움직인다. 터치·키보드·스크롤바는 그대로 둔다.
   if (!reduced) {
     let wTarget = null, wCur = 0, wRaf = 0, wLast = 0;
-    const zone = y => { const py = people.offsetTop, vh = window.innerHeight; return y >= py - vh * 1.7 && y <= py + vh * .45; };
+    const zone = y => { const py = people.offsetTop, ry = reviews.offsetTop, vh = window.innerHeight; return y >= py - vh * 1.7 && y <= ry + vh * .5; }; // 내려갈 때와 올라올 때 같은 구간
     const maxY = () => document.documentElement.scrollHeight - window.innerHeight;
     const stop = () => { if (wRaf) cancelAnimationFrame(wRaf); wRaf = 0; wTarget = null; };
     const step = now => {
