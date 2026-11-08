@@ -56,10 +56,9 @@ body.make-live .hero-rail{opacity:1!important}
  .hero-topline{top:clamp(24px,2.7vw,calc(52px*var(--k)));font-size:clamp(11px,1.25vw,24px)!important}
  .hero-copy{width:min(28vw,calc(540px*var(--k)))}
  .hero-copy h1{font-size:clamp(20px,2.1vw,calc(40px*var(--k)))}
- .hero-copy>p:last-child{max-width:calc(360px*var(--k));margin-top:calc(18px*var(--k));font-size:clamp(14px,1.25vw,calc(22px*var(--k)))}
+ .hero-copy>p:last-child{max-width:calc(360px*var(--k));margin-top:calc(18px*var(--k))}
  .hero-card{bottom:clamp(24px,1.667vw,calc(32px*var(--k)));width:clamp(262px,18.56vw,calc(356px*var(--k)));height:clamp(304px,21.51vw,calc(413px*var(--k)));padding:clamp(18px,1.25vw,calc(24px*var(--k)));backdrop-filter:blur(calc(6px*var(--k)));-webkit-backdrop-filter:blur(calc(6px*var(--k)))}
  .hero-card strong{font-size:clamp(25px,1.667vw,calc(40px*var(--k)))}
- .hero-card>span:last-child{font-size:clamp(15px,1.04vw,calc(20px*var(--k)))}
  .hero-card-rule{margin-bottom:calc(16px*var(--k))}
  .hero-scroll{bottom:calc(22px*var(--k));font-size:calc(11px*var(--k));gap:calc(8px*var(--k));min-height:calc(44px*var(--k))}
  .hero-scroll span{width:calc(25px*var(--k));height:calc(25px*var(--k))}
