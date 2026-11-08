@@ -309,16 +309,18 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
   }
   const bone = n => root.getObjectByName(n);
   const wristBone = bone('DEF-handR'), elbowBone = bone('DEF-forearmR'), _w = new THREE.Vector3(), _el = new THREE.Vector3();
-  const ARM_FADE = [num('hfade0', 0.1), num('hfade1', 0.38)];   // 아래팔 길이 비율: 손목에서 이만큼 가면 사라지기 시작 → 다 사라짐
+  const ARM_FADE = [num('hfade0', 1.05), num('hfade1', 1.35)];   // 아래팔 길이 비율: 팔꿈치를 지나서야 사라진다 → 아래팔은 화면 아래 끝까지 이어지고(oryzo), 위팔 잘린 끝은 어디서도 보이지 않는다
   const fb = {}; for (const f of FINGERS) fb[f] = [bone(`DEF-${f}01R`), bone(`DEF-${f}02R`), bone(`DEF-${f}03R`)];
 
   // ----- 자세: oryzo(Powered by AI)처럼 엄지와 검지로 집고, 중지·약지·소지는 손바닥 쪽으로 주먹처럼 접는다 -----
   //  리깅은 그대로: 편 손(클립 0s)에서 마디마다 로컬 X축으로 접는다(접는 방향은 클립의 쥔 손 1s에서 얻음). 접는 각도는 여기서 정한다.
   //  curl 0 = 편 손, 1 = 잡은 손.
+  // oryzo Powered by AI(오른손, 손바닥이 보임): 엄지는 오른쪽에 세우고, 검지는 잔 앞쪽으로 접어 감싸고,
+  // 중지는 잔 뒤로 펴 올려 검지와 함께 잔을 끼우며, 약지·소지는 손바닥 쪽으로 접는다. (?f_index=a,b,c 로 마디 각도 확인용)
+  const degs = (k, d) => { const v = (Q.get(k) || '').split(',').map(Number); return v.length === 3 && v.every(Number.isFinite) ? v : d; };
   const CURL_DEG = {
-    thumb: [num('ht1', -25), num('ht2', -10), num('ht3', 0)],   // 엄지는 펴서 잔 굽 옆으로 세운다
-    f_index: [num('hi1', 52), num('hi2', 68), num('hi3', 32)],
-    f_middle: [78, 96, 58], f_ring: [84, 98, 58], f_pinky: [90, 96, 52]
+    thumb: degs('thumb', [-35, -15, 0]), f_index: degs('f_index', [50, 65, 30]), f_middle: degs('f_middle', [10, 15, 8]),
+    f_ring: degs('f_ring', [84, 98, 58]), f_pinky: degs('f_pinky', [90, 96, 52])
   };
   const q0 = {}, axes = {}, dq = new THREE.Quaternion(), qa = new THREE.Quaternion();
   restAct.time = 1; for (const f of FINGERS) fAct[f].time = 0; mixer.update(0);
@@ -334,20 +336,23 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
   for (const f of FINGERS) fAct[f].stop();   // 이후 손가락은 poseFingers만 움직인다(팔·손목은 클립의 쥔 자세 그대로)
   const curl = {}; for (const f of FINGERS) curl[f] = 0;
   const st = { d: 0.4, init: false };   // d: 손이 잔 축을 따라 아래로 내려간 양(손 모델 미터)
+  // 손목: 클립의 쥔 자세는 손바닥이 위를 보도록 손목이 꺾여 있다 → 손목을 펴서 손가락이 위를 향하게(oryzo처럼 손바닥이 카메라 쪽)
+  //  (믹서는 값이 같으면 다시 쓰지 않으므로, 클립 자세를 한 번 저장해 두고 매번 그 위에 절대값으로 정한다 — 회전이 누적되지 않게)
+  const WRIST = [num('hwx', 70), num('hwy', 0), num('hwz', 0)].map(THREE.MathUtils.degToRad);
+  const wristPose = wristBone ? wristBone.quaternion.clone().multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(WRIST[0], WRIST[1], WRIST[2]))) : null;
   function poseFingers() {
+    if (wristPose) wristBone.quaternion.copy(wristPose);
     for (const f of FINGERS) fb[f].forEach((b, j) => {
       b.quaternion.copy(q0[f][j]).multiply(dq.setFromAxisAngle(axes[f][j], THREE.MathUtils.degToRad(CURL_DEG[f][j]) * curl[f]));
     });
   }
-  // 잔이 놓이는 자리(손 모델 좌표): 다 잡은 자세에서 엄지 끝과 검지 가운데 마디 사이. 손은 이 점이 잔 굽 바닥 중심에 오도록 놓인다.
+  // 잔이 놓이는 자리(손 모델 좌표): 다 잡은 자세에서 검지 가운데 마디와 중지 가운데 마디 사이(잔 굽이 두 손가락 사이에 끼인다).
   const ANCHOR = new THREE.Vector3();
   {
-    const tip = new THREE.Vector3(), yAx = new THREE.Vector3(), inv = new THREE.Matrix4(), [, t2, t3] = fb.thumb;
+    const inv = new THREE.Matrix4(), m = new THREE.Vector3();
     for (const f of FINGERS) curl[f] = 1; poseFingers(); root.updateMatrixWorld(true); inv.copy(root.matrixWorld).invert();
-    yAx.setFromMatrixColumn(t3.matrixWorld, 1).normalize();
-    tip.setFromMatrixPosition(t3.matrixWorld).addScaledVector(yAx, new THREE.Vector3().setFromMatrixPosition(t3.matrixWorld).distanceTo(new THREE.Vector3().setFromMatrixPosition(t2.matrixWorld)) * 0.85);
-    ANCHOR.setFromMatrixPosition(fb.f_index[1].matrixWorld).add(tip).multiplyScalar(0.5).applyMatrix4(inv);
-    ANCHOR.add(new THREE.Vector3(num('hax', 0), num('hay', -0.025), num('haz', 0.03)));   // 손을 2.5cm 올리고 3cm 앞으로: 굽 아랫부분이 엄지·검지 사이에 끼고 손가락 뒤로 들어간다
+    ANCHOR.setFromMatrixPosition(fb.f_index[1].matrixWorld).add(m.setFromMatrixPosition(fb.f_middle[1].matrixWorld)).multiplyScalar(0.5).applyMatrix4(inv);
+    ANCHOR.add(new THREE.Vector3(num('hax', 0.03), num('hay', -0.06), num('haz', 0)));   // 손을 잔 쪽으로 올려 굽이 엄지와 중지 사이에 오게
     for (const f of FINGERS) curl[f] = 0;
   }
   // 본 잔(손이 붙잡는 잔)
@@ -488,7 +493,7 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
     fwd.copy(camPos).sub(cbase); fwd.addScaledVector(axis, -fwd.dot(axis)).normalize();
     zNow.set(0, 0, 1).applyQuaternion(q);
     const ang = Math.atan2(cr.crossVectors(zNow, fwd).dot(axis), zNow.dot(fwd));
-    q2.setFromAxisAngle(axis, ang + THREE.MathUtils.degToRad(num('hyaw', 200))); q.premultiply(q2);   // 손등 쪽에서 본 모습(oryzo): 엄지는 왼쪽, 검지는 오른쪽 위에서 감싼다
+    q2.setFromAxisAngle(axis, ang + THREE.MathUtils.degToRad(num('hyaw', -25))); q.premultiply(q2);   // 손바닥이 카메라 쪽(oryzo 오른손): 엄지가 오른쪽
     hand.quaternion.copy(q); hand.scale.setScalar(s);
 
     // 등장/퇴장 목표 높이(손 로컬 미터): 화면 아래 밖까지
