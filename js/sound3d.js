@@ -184,7 +184,16 @@ new GLTFLoader().loadAsync("assets/models/sori-60th-doraji.glb").then(g=>{
   let yaw=-.35;try{const v=window.__kwangjuyoCupView;if(v&&v.length===4){const e=new THREE.Euler().setFromQuaternion(new THREE.Quaternion(v[0],v[1],v[2],v[3]),"YXZ");if(isFinite(e.y))yaw=e.y}}catch(e){}
   cup.rotation.y=yaw;
   S.yaw=yaw;ready=true;
+  (window.requestIdleCallback||(f=>setTimeout(f,300)))(warm,{timeout:2000});
 }).catch(e=>{S.err=e;console.warn("[sound3d]",e)});
+/* 미리 데우기: 마지막 칸(표지)이 들어와 3D가 처음 그려지는 순간, 셰이더 컴파일·그림자 지도·텍스처 업로드·배경 사진 디코딩을
+   그 자리에서 하느라 멈추지 않도록 로드 뒤 쉬는 시간에 한 번 끝내 둔다(화면에는 보이지 않는 상태에서). */
+function warm(){
+  S.warmImgs=["img/hero-bg-pine.jpg","img/sound-table-top.jpg"].map(src=>{const i=new Image();i.src=src;i.decode().catch(()=>{});return i});
+  const draw=()=>{if(root.classList.contains("is-live"))return;size();cup.updateMatrixWorld(true);placeCamera(0,0,1,0);marble.visible=true;renderer.render(scene,camera);marble.visible=false};
+  marble.visible=true;const p=renderer.compileAsync?renderer.compileAsync(scene,camera):Promise.resolve(renderer.compile(scene,camera));marble.visible=false;
+  p.then(draw,draw);
+}
 // 손잡이 바깥 반지름(모델 실측값: 높이 0.05→0.52, 0.95→0.323)
 function stemR(y){const t=clamp((y-.05)/.9);return .521-(.521-.323)*(1-Math.pow(1-t,1.35))}
 
