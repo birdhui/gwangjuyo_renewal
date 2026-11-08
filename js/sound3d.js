@@ -282,6 +282,7 @@ function frame(now){
   we=weS;
   const offset=G?G.offset:9,showSlide=offset<1.02;
   const on=showSlide&&raw>-2.6&&raw<11.4;   // 암전이 끝나면(아름다움 섹션 시작 전) 바로 비켜 준다
+  setCueShow(on?Math.max(1-fit(we,1.6,3.2),fit(we,10.2,11)):1);
   root.classList.toggle("is-live",on);
   /* 오른쪽 레일(스크롤바): 마지막 칸이 3D 공간으로 화면 전체가 될 때 함께 서서히 사라지고, 암전이 끝나 다음 섹션으로 넘어갈 때 다시 나타난다 */
   railVis(on?1-io(fit(we,2.35,3.05))*(1-sm(fit(we,10.85,11.4))):1);
@@ -362,7 +363,10 @@ function frame(now){
   black.style.opacity=B.toFixed(3);
   syncSound();
 }
-let hintW=0;
+let hintW=0,cueShow=-1;
+// '스크롤하여 내려가기'(script.js)가 보이는 정도: 화보 표지 글이 양옆으로 밀려나며 사라질 때(hide 뒤 절반) 함께 사라지고,
+// 암전이 끝나 '쓰임으로 이어지는 아름다움'으로 넘어갈 때 다시 나타난다. 바뀔 때만 알린다.
+function setCueShow(v){v=Math.round(v*1000)/1000;if(v===cueShow)return;cueShow=v;window.__kjyS3dCue=v;dispatchEvent(new Event("kjy:s3dcue"))}
 addEventListener("resize",()=>{hintW=0});
 function swayHint(now){
   if(!hintW)hintW=hint.offsetWidth;
