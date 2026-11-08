@@ -194,12 +194,12 @@ void main(){
     `html .beauty-sticky,html.kjy-story-on .beauty-sticky{background:${grad}!important}`
     + '.beauty-sticky::after{display:none!important}'
     + '.beauty-day{background:#ffedd7!important}'
-    + '.beauty-marble{width:min(96svh,94vw)!important;top:50%!important;filter:drop-shadow(24px 30px 40px rgba(0,0,0,.55))!important}'
+    + '.beauty-marble{top:50%!important;filter:drop-shadow(24px 30px 40px rgba(0,0,0,.55))!important}'
     + '.beauty-pine{display:none!important}'
     + '.kjy-pine-shadow{position:absolute;inset:-6% -4% auto auto;width:min(110vw,1700px);aspect-ratio:1300/700;pointer-events:none;z-index:1;opacity:calc(var(--day-opacity,0)*.2);background:#3b2a1c;'
     +   '-webkit-mask:url(img/hero-bg-pine-branch.webp) right top/100% 100% no-repeat;mask:url(img/hero-bg-pine-branch.webp) right top/100% 100% no-repeat;filter:blur(7px);transform-origin:96% 4%;animation:kjy-pine-sway 7.5s ease-in-out infinite}'
     + '@keyframes kjy-pine-sway{0%,100%{transform:rotate(0deg) translate3d(0,0,0)}22%{transform:rotate(.9deg) translate3d(-6px,3px,0)}48%{transform:rotate(-.5deg) translate3d(4px,-2px,0)}71%{transform:rotate(1.3deg) translate3d(-9px,5px,0)}}'
-    + '@media (max-width:767px){.beauty-marble{width:94vw!important}.kjy-pine-shadow{width:200vw}}';
+    + '@media (max-width:767px){.kjy-pine-shadow{width:200vw}}';
   document.head.appendChild(st);
   const mount = () => {
     const bs = document.querySelector('#beauty .beauty-sticky'); if (bs && window.__kjyBgMount) window.__kjyBgMount(bs);

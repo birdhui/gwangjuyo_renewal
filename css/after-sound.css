@@ -125,9 +125,8 @@ body.beauty-light .hero-rail{color:var(--after-ink)}
 .cue-text{font:inherit}
 /* 구슬: 크기 조금 더 축소(96svh·94vw → 84svh·82vw).
    부드럽게 구르도록 그림자는 돌지 않는 별도 층으로 분리하고(예전엔 그림자가 구슬과 함께 빙글 돌았다), 구슬 이미지만 회전한다. */
-html body #beauty .beauty-marble{width:min(84svh,82vw)!important;filter:none!important;container-type:inline-size}
+html body #beauty .beauty-marble{filter:none!important;container-type:inline-size}
 @media(prefers-reduced-motion:no-preference){html body #beauty .beauty-marble{transform:translate3d(var(--marble-x,100vw),-50%,0)!important}}
-@media(max-width:767px){html body #beauty .beauty-marble{width:82vw!important}}
 #beauty .beauty-marble img{position:relative;z-index:1;transform:rotate(var(--marble-rotation,0deg));will-change:transform;backface-visibility:hidden}
 #beauty .beauty-marble::before{content:'';position:absolute;inset:.6%;border-radius:50%;background:rgba(0,0,0,.5);transform:translate(2.8cqw,3.5cqw);filter:blur(2.3cqw);pointer-events:none}
 /* 사람들 섹션 소리잔: 섹션과 함께 부드럽게 올라오고, 섹션이 화면을 채우면 고정(레일 안 sticky) */
@@ -162,9 +161,9 @@ html:root body .hero-rail.hero-rail{opacity:var(--rail-vis,1)!important}
 html.rail-off .rail-scroll{display:none!important}
 /* r35: 풍경 섹션 제목(잔 하나로 달라지는 풍경) 약 10% 축소 */
 html body .scenery-heading{font-size:clamp(20px,2.25vw,43px)}
-/* r36: 쓰임으로 이어지는 아름다움 — 구슬 축소 + 외곽 빛(림)·바닥 빛그림자, 제목 빛 번짐(oryzo sustainability pulse)·잔물결 */
-html body #beauty .beauty-marble{width:min(70svh,70vw)!important}
-@media(max-width:767px){html body #beauty .beauty-marble{width:70vw!important}}
+/* 쓰임으로 이어지는 아름다움 — 구슬 크기(화면 높이·너비의 62%) */
+html body #beauty .beauty-marble{width:min(62svh,62vw)!important}
+@media(max-width:767px){html body #beauty .beauty-marble{width:62vw!important}}
 #beauty .beauty-marble::before{inset:auto!important;left:-62%!important;width:224%!important;top:84%!important;height:36%!important;border-radius:0!important;transform:none!important;filter:blur(1.2cqw)!important;background:
  radial-gradient(ellipse 16% 4.5% at 52% 20%,rgba(255,242,214,.72),rgba(255,242,214,0) 72%),
  radial-gradient(ellipse 32% 22% at 62% 30%,rgba(255,222,176,.32),rgba(255,222,176,0) 74%),
