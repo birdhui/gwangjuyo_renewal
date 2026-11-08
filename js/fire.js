@@ -225,6 +225,7 @@ function frame() {
   grade.uniforms.uTime.value = t; grade.uniforms.uHeat.value = reduced ? 0 : .6 * sm(fit(heat, .3, 1)); grade.uniforms.uFlash.value = reduced ? 0 : flash;
   // a faint tremor as each burner catches (no zoom)
   const sh = reduced ? 0 : flash * .004; camera.position.set(Math.sin(t * 61) * sh, Math.sin(t * 47) * sh, 0);
+  { const SW = window.__kjySway; if (SW && !reduced) { const tx = (SW.x * 9).toFixed(1), ty = (SW.y * 5).toFixed(1); const v = `translate3d(${tx}px,${ty}px,0) scale(1.02)`; if (canvas.style.transform !== v) canvas.style.transform = v; } } // 가마도 마우스를 따라 아주 살짝
 
   beatsUpdate(p);
   composer.render(dt);

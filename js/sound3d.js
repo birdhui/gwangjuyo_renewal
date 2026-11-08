@@ -331,7 +331,7 @@ function frame(now){
   /* 3) 위에서 내려다보는 시선(E) → 4) 손잡이로 다가감(A) → 5) 회색·흐림(G), 투시·구슬(X) → 6) 암전(B) */
   const E=fit(we,2.9,4.3),A=fit(we,5.3,7.7),GR=sm(fit(we,5.5,7.3)),X=sm(fit(we,7.2,7.9)),B=sm(fit(we,9.7,10.7));
   if(ready){
-    {const SW=window.__kjySway,g=window.__kjySwayGate?window.__kjySwayGate():1;cup.rotation.y=S.yaw+(SW?SW.x*.16*g:0);S.cupYaw=cup.rotation.y}  // 마우스에 따라 잔이 살짝 돌아봄(바닥 자리는 그대로라 사진 배치와 어긋나지 않음)
+    {const SW=window.__kjySway,g=window.__kjySwayGate?window.__kjySwayGate():1;cup.rotation.y=S.yaw+(SW?SW.x*.16*g:0);cup.rotation.x=SW?SW.y*.03*g:0;cup.rotation.z=SW?-SW.x*.035*g:0;S.cupYaw=cup.rotation.y}  // 마우스에 따라 잔이 살짝 돌아봄(바닥 자리는 그대로라 사진 배치와 어긋나지 않음)
     cup.updateMatrixWorld(true);
     const cam=placeCamera(A,dx,slideZoom,E);
     const k=cam.dE/cam.d,cr=cam.cr,[bxN,byN]=cam.base;

@@ -533,7 +533,9 @@ function frame() {
   { const k = 1 + (fitK - 1) * (1 - (intro ? sm(fit(rew, .15, .6)) : 1)); clay.scale.set(k, 1, k); }
   if (intro) { solveFit(); const k = 1 + (fitK - 1) * (1 - sm(fit(rew, .15, .6))); clay.scale.set(k, 1, k); if (rew >= .6) clay.scale.multiplyScalar(.35 + .65 * sm(fit(rew, .7, .86))); }
   const D = fitD + (dist - fitD) * cb, E = .1 + (el - .1) * cb, Y = fitY + (ty - .05 - fitY) * cb, X = fitX * (1 - cb), Az = az * cb;
-  placeCam(X, Y, D, E, Az);
+  // 마우스를 따라 잔이 아주 살짝 돌아보는 움직임(히어로·시리즈와 같은 값). 되감기·깨짐 동안과 가마로 내려앉을 때는 끈다.
+  const SWc = window.__kjySway, swg = !intro && !reduced && SWc ? 1 - sm(fit(lift, .55, .9)) : 0;
+  placeCam(X, Y, D, E + (swg ? SWc.y * .03 * swg : 0), Az - (swg ? SWc.x * .07 * swg : 0));
   // 자세: 되감기 첫머리는 앞 장면 잔과 같은 각도, 물레가 드러나며 곧게 선다. 그 위에 물레 회전.
   if (intro) orientQ.copy(camera.quaternion).multiply(heroQ).slerp(IDQ, cb); else orientQ.identity();
   spinner.quaternion.copy(orientQ).multiply(spinQ.setFromAxisAngle(YAX, spin));
