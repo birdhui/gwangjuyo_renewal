@@ -94,7 +94,7 @@ function init() {
     if (!renderer || !camera) return;
     const w = Math.max(1, canvas.clientWidth);
     const h = Math.max(1, canvas.clientHeight);
-    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(Math.max(1, Math.min(Math.min(3, Math.max(2, (devicePixelRatio || 1) * 1.5)), 4096 / Math.max(w, h, 1))));   // 시리즈 잔과 같은 슈퍼샘플링
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     // 화면 전체 캨버스에서 잔 높이가 rewind와 같은 크기(화면 높이의 약 40%)가 되게, 세로 화면에서는 너비도 넘치지 않게

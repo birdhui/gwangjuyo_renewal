@@ -91,7 +91,7 @@ function updateCups() {
 const SSAA = { renderer: null };
 function aaTarget(r) {
   const dpr = window.devicePixelRatio || 1;
-  let t = Q.has('ssaa') ? num('ssaa', 2) : (dpr < 1.5 ? 2 : Math.min(2, dpr));
+  let t = Q.has('ssaa') ? num('ssaa', 2) : Math.min(3, Math.max(2, dpr * 1.5));   // 기기 배율보다 1.5배 크게(최소 2, 최대 3) 그려 줄여 보이게 → 얕은 각도의 잔 테두리도 계단 없이
   const el = r.domElement, w = el.clientWidth || innerWidth, h = el.clientHeight || innerHeight;
   t = Math.min(t, 4096 / Math.max(1, w, h));
   return Math.max(1, t);
