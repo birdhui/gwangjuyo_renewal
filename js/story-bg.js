@@ -56,7 +56,14 @@ void main(){
     const y = scrollY / Math.max(1, innerHeight);
     const glow = reduce.matches ? 0 : smooth(GLOW_START, GLOW_END, y);
     const s = Math.min(1, Math.max(0, +window.__kwangjuyoSeriesProgress || 0));
-    const bloom = reduce.matches ? 0 : smooth(0, .08, s) * (1 - smooth(.93, 1, s));
+    let bloom = reduce.matches ? 0 : smooth(0, .08, s) * (1 - smooth(.93, 1, s));
+    // 일상의 자리마다(풍경) 섹션: 시리즈보다 더 크게 퍼지고 밝은 글로우(섹션에 들어오며 커지고, 나가며 줄어듦)
+    const sc = document.getElementById('scenery');
+    if (sc && !reduce.matches) {
+      const r = sc.getBoundingClientRect(), vh = innerHeight;
+      const k = smooth(vh * .9, vh * .1, r.top) * smooth(vh * .1, vh * 1.1, r.bottom);
+      bloom = Math.max(bloom, 1.45 * k);
+    }
     return [glow, bloom];
   }
   const views = [];
@@ -112,6 +119,12 @@ void main(){
   reduce.addEventListener('change', kick);
   setInterval(kick, 400);   // 시리즈 진행값은 스크롤 뒤 부드럽게 따라오므로 가끔 다시 확인
   window.__kjyBgMount = host => { mount(host); for (const v of views) v.key = ''; kick(); };
+  // 가마 장면: 물레까지와 같은 배경 셰이더를 가마 화면 뒤에 깔고, 가마 그림은 '밝은 쪽 우선(lighten)'으로 겹쳐 어두운 바깥에 배경 그라데이션이 보이게 한다
+  { const st = document.createElement('style');
+    st.textContent = '#fire .make-stage>canvas.story-bg-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0;pointer-events:none}#fire .make-stage>#fire-gl{z-index:1;mix-blend-mode:lighten}';
+    document.head.appendChild(st);
+    const mf = () => { const fs = document.querySelector('#fire .make-stage'); if (fs) { mount(fs); kick(); } };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mf); else mf(); }
 
   // .hero-darkness 는 hero-scene.js(React)가 그린 뒤에 생긴다 → 생길 때까지 기다림
   const tryMount = () => { const host = document.querySelector('.hero-darkness'); if (host) { mount(host); kick(); return true; } return false; };
