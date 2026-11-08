@@ -328,6 +328,36 @@ function init() {
   function requestTick() { if (!raf) raf = requestAnimationFrame(draw); }
   window.addEventListener('pointermove', () => { if (cupVisual.classList.contains('is-visible')) requestTick(); }, { passive: true });
   window.addEventListener('scroll', requestTick, { passive: true });
+
+  // '쓰임으로 이어지는 아름다움' 끝 ↔ '한 잔을 곁에 둔…' 시작 경계: 휠 한 칸씩 화면이 딱딱 끊겨 내려가지 않도록
+  // 이 구간에서만 휠 스크롤을 관성 있게(목표 위치를 부드럽게 따라가도록) 움직인다. 터치·키보드·스크롤바는 그대로 둔다.
+  if (!reduced) {
+    let wTarget = null, wCur = 0, wRaf = 0, wLast = 0;
+    const zone = y => { const py = people.offsetTop, vh = window.innerHeight; return y >= py - vh * 1.7 && y <= py + vh * .45; };
+    const maxY = () => document.documentElement.scrollHeight - window.innerHeight;
+    const stop = () => { if (wRaf) cancelAnimationFrame(wRaf); wRaf = 0; wTarget = null; };
+    const step = now => {
+      const dt = Math.min(.1, Math.max(.001, (now - wLast) / 1000)); wLast = now;
+      wCur = mix(wCur, wTarget, 1 - Math.exp(-6 * dt));
+      if (Math.abs(wTarget - wCur) < .4) wCur = wTarget;
+      window.scrollTo({ top: wCur, behavior: 'instant' });
+      if (wCur === wTarget) { wRaf = 0; wTarget = null; return; }
+      wRaf = requestAnimationFrame(step);
+    };
+    window.addEventListener('wheel', e => {
+      if (e.ctrlKey || e.defaultPrevented || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+      const base = wTarget ?? window.scrollY;
+      const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1);
+      if (wTarget === null && !zone(base) && !zone(base + d)) return;
+      e.preventDefault();
+      if (wTarget === null) wCur = window.scrollY;
+      wTarget = clamp(base + d, 0, maxY());
+      if (!wRaf) { wLast = performance.now(); wRaf = requestAnimationFrame(step); }
+    }, { passive: false });
+    // 스크롤바를 끌거나 키보드·메뉴로 이동하면 즉시 손을 뗀다
+    window.addEventListener('scroll', () => { if (wTarget !== null && Math.abs(window.scrollY - wCur) > 3) stop(); }, { passive: true });
+    ['keydown', 'pointerdown', 'touchstart'].forEach(t => window.addEventListener(t, () => { if (wTarget !== null) stop(); }, { passive: true }));
+  }
   window.addEventListener('resize', () => {
     viewport = window.innerHeight; pageWidth = window.innerWidth;
     measureGallery(); resize3d(); requestTick();
