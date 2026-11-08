@@ -112,8 +112,35 @@ function aaTarget(r) {
   if (!d || !d.cup) return requestAnimationFrame(aaHook);
   let sc = d.cup; while (sc.parent) sc = sc.parent;
   const prev = sc.onBeforeRender;
-  sc.onBeforeRender = function (renderer) { if (prev) prev.apply(this, arguments); SSAA.renderer = renderer; };
+  let n = 0;
+  sc.onBeforeRender = function (renderer) { if (prev) prev.apply(this, arguments); SSAA.renderer = renderer; if ((n++ % 20) === 0) footShade(sc); };
 })();
+/* 잔 굽 바닥 테두리: 굽 아랫면의 둥근 모서리가 주변 빛을 받아 바닥 경계에 회색 선처럼 그려졌다.
+   실제 도자기처럼 탁자에 닿는 굽 맨 아래(잔 높이의 약 2%)를 서서히 어둡게(접촉 음영) 해서 선이 보이지 않게 한다. */
+const footDone = new WeakSet();
+/* 굽 아래 둥근 테두리의 법선이 메시 분할 때문에 들쭉날쭉(-0.3 ~ -0.55)해서, 빛을 받는 띠가 바닥 경계에 밝은 선처럼 그려졌다.
+   굽 맨 아래(잔 높이 3% 안) 법선을 몸통 쪽(바깥 수평 방향)으로 부드럽게 이어 주면 몸통과 같은 빛으로 이어져 선이 사라진다. */
+function footShade(scene) {
+  scene.traverse(o => {
+    if (!o.isMesh || !o.material || !o.material.userData || !o.material.userData.dissolve || o.name === 'kjy-cup-prepass') return;
+    const g = o.geometry; if (footDone.has(g)) return; footDone.add(g);
+    const P = g.attributes.position, N = g.attributes.normal; if (!P || !N) return;
+    if (!g.boundingBox) g.computeBoundingBox();
+    const bb = g.boundingBox, y0 = bb.min.y, h = Math.max(1e-6, bb.max.y - y0), cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2;
+    const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    for (let i = 0; i < P.count; i++) {
+      const f = (P.getY(i) - y0) / h; if (f > .03) continue;
+      let nx = N.getX(i), ny = N.getY(i), nz = N.getZ(i);
+      if (ny < -.9) continue;                       // 바닥 면(아래를 보는 면)은 그대로
+      const rx = P.getX(i) - cx, rz = P.getZ(i) - cz, rl = Math.hypot(rx, rz) || 1;
+      const tx = rx / rl, ty = -.12, tz = rz / rl;  // 몸통처럼 바깥을 보는 법선
+      const w = .9 * (1 - sstep(.012, .03, f));
+      nx += (tx - nx) * w; ny += (ty - ny) * w; nz += (tz - nz) * w;
+      const l = Math.hypot(nx, ny, nz) || 1; N.setXYZ(i, nx / l, ny / l, nz / l);
+    }
+    N.needsUpdate = true;
+  });
+}
 
 /* ====================== 1-c. 공용 마우스 흔들림 값 ======================
    소리잔이 보이는 모든 3D 장면(히어로 캔버스·구슬 소리 장면·사람들 이야기 잔)이 같은 값을 읽는다.
