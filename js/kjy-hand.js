@@ -4,9 +4,9 @@
 
    - 히어로 3D 장면(hero-scene.js) 안 같은 공간에 넣어 잔과 손이 서로 정확히 가린다.
    - 손은 화면 아래에서 올라와 잔을 쥐고, 시리즈가 끝나면 손을 펴며 다시 아래로 사라진다.
-   - 충돌 처리: 손가락 마디를 캡슐로, 소리잔(본 잔 + 시리즈 5종)을 실제 메시에서 뽑은 회전체 단면으로 보고
-     매 프레임 손가락·손 높이를 '잔을 뚫지 않는 범위'로만 움직인다. 손가락은 잔에 닿으면 멈춘다.
-   - 손가락 호버: 가리킨 손가락만 살짝 펴졌다 돌아온다(이때도 충돌 처리).
+   - 자세(oryzo Powered by AI): 엄지와 검지로 잔 굽을 집고 중지·약지·소지는 손바닥 쪽으로 접는다.
+     처음엔 손가락이 살짝 접힌 채 올라와 스크롤할수록 잡는다. 손목 아래 팔은 서서히 투명해진다.
+   - 손가락 호버: 가리킨 손가락만 살짝 펴졌다 돌아온다.
    - 시리즈 잔 전환: 점묘(디더) 대신 순서가 정해진 교차 페이드 → 계단·점 무늬 없이 부드럽게.
    기존 번들은 고치지 않고, 번들이 알려주는 잔·카메라 객체(window.__kwangjuyoDebug)만 쓴다. */
 import * as THREE from 'three';
@@ -203,10 +203,7 @@ window.__kjySwayGate = function () {
 /* ====================== 2. 손 ====================== */
 // Blender에서 맞춘 기준: 본 잔(도라지 60주년) 높이 0.115m일 때 잔 굽 바닥 중심 = Blender (-0.2631,-0.0316,1.8853) → glTF (x, z, -y)
 const CUP_H = num('cuph', 0.115);
-const GRIP = new THREE.Vector3(num('hx', -0.2631), num('hy', 1.8853), num('hz', 0.0316));
 const FINGERS = ['thumb', 'f_index', 'f_middle', 'f_ring', 'f_pinky'];
-const RAD = { thumb: [0.0095, 0.0088, 0.0078], f_index: [0.0085, 0.0075, 0.0068], f_middle: [0.0088, 0.0078, 0.007], f_ring: [0.0083, 0.0074, 0.0066], f_pinky: [0.0075, 0.0068, 0.006] };
-const TAU_STEP = 0.025, TAU_N = 81;
 const CURL0 = num('hcurl0', 0.35);   // 처음 올라올 때 손가락이 접혀 있는 정도(0 편 손 ~ 1 쥔 손)    // 손가락 진행값 τ: 0 편 손, 1 쥔 손, 2 호버(살짝 편 손)
 
 function waitFor(test, ms = 60000) {
@@ -315,51 +312,45 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
   const ARM_FADE = [num('hfade0', 0.1), num('hfade1', 0.38)];   // 아래팔 길이 비율: 손목에서 이만큼 가면 사라지기 시작 → 다 사라짐
   const fb = {}; for (const f of FINGERS) fb[f] = [bone(`DEF-${f}01R`), bone(`DEF-${f}02R`), bone(`DEF-${f}03R`)];
 
-  // ----- 충돌용: τ마다 손가락 마디 캡슐 표본점(손 모델 로컬 좌표)을 미리 계산 -----
-  const SAMP = 6, inv = new THREE.Matrix4(), yAx = new THREE.Vector3();
-  const table = {}; for (const f of FINGERS) table[f] = new Float32Array(TAU_N * 3 * SAMP * 4); // x,y,z,r
-  function fingerPoints(f, outArr, base0) {
-    const [b1, b2, b3] = fb[f];
-    const p1 = new THREE.Vector3().setFromMatrixPosition(b1.matrixWorld).applyMatrix4(inv);
-    const p2 = new THREE.Vector3().setFromMatrixPosition(b2.matrixWorld).applyMatrix4(inv);
-    const p3 = new THREE.Vector3().setFromMatrixPosition(b3.matrixWorld).applyMatrix4(inv);
-    // 끝마디 끝점: 본의 +Y 방향으로 (가운데 마디 길이 × 0.85)
-    yAx.setFromMatrixColumn(b3.matrixWorld, 1).transformDirection(inv);
-    const p4 = p3.clone().addScaledVector(yAx, p3.distanceTo(p2) * 0.85);
-    const segs = [[p1, p2], [p2, p3], [p3, p4]]; let k = base0;
-    for (let s = 0; s < 3; s++) for (let i = 0; i < SAMP; i++) {
-      const t = i / (SAMP - 1); const a = segs[s][0], b = segs[s][1];
-      outArr[k++] = a.x + (b.x - a.x) * t; outArr[k++] = a.y + (b.y - a.y) * t; outArr[k++] = a.z + (b.z - a.z) * t; outArr[k++] = RAD[f][s];
-    }
+  // ----- 자세: oryzo(Powered by AI)처럼 엄지와 검지로 집고, 중지·약지·소지는 손바닥 쪽으로 주먹처럼 접는다 -----
+  //  리깅은 그대로: 편 손(클립 0s)에서 마디마다 로컬 X축으로 접는다(접는 방향은 클립의 쥔 손 1s에서 얻음). 접는 각도는 여기서 정한다.
+  //  curl 0 = 편 손, 1 = 잡은 손.
+  const CURL_DEG = {
+    thumb: [num('ht1', -25), num('ht2', -10), num('ht3', 0)],   // 엄지는 펴서 잔 굽 옆으로 세운다
+    f_index: [num('hi1', 52), num('hi2', 68), num('hi3', 32)],
+    f_middle: [78, 96, 58], f_ring: [84, 98, 58], f_pinky: [90, 96, 52]
+  };
+  const q0 = {}, axes = {}, dq = new THREE.Quaternion(), qa = new THREE.Quaternion();
+  restAct.time = 1; for (const f of FINGERS) fAct[f].time = 0; mixer.update(0);
+  for (const f of FINGERS) q0[f] = fb[f].map(b => b.quaternion.clone());
+  for (const f of FINGERS) fAct[f].time = 1; mixer.update(0);
+  for (const f of FINGERS) axes[f] = fb[f].map((b, j) => {
+    qa.copy(q0[f][j]).invert().multiply(b.quaternion);
+    const sn = Math.sqrt(Math.max(0, 1 - qa.w * qa.w));
+    // 굽힘 축 = 마디의 로컬 X(Rigify 손가락 뼈의 굽힘 축) — 비틀림·옆으로 벌어짐 없이 손바닥 쪽으로만 접힌다. 방향(부호)만 클립에서 얻는다.
+    const ax = sn > 1e-4 ? qa.x / sn * (qa.w < 0 ? -1 : 1) : 1;
+    return new THREE.Vector3(ax < 0 ? -1 : 1, 0, 0);
+  });
+  for (const f of FINGERS) fAct[f].stop();   // 이후 손가락은 poseFingers만 움직인다(팔·손목은 클립의 쥔 자세 그대로)
+  const curl = {}; for (const f of FINGERS) curl[f] = 0;
+  const st = { d: 0.4, init: false };   // d: 손이 잔 축을 따라 아래로 내려간 양(손 모델 미터)
+  function poseFingers() {
+    for (const f of FINGERS) fb[f].forEach((b, j) => {
+      b.quaternion.copy(q0[f][j]).multiply(dq.setFromAxisAngle(axes[f][j], THREE.MathUtils.degToRad(CURL_DEG[f][j]) * curl[f]));
+    });
   }
-  root.updateMatrixWorld(true); inv.copy(root.matrixWorld).invert();
-  for (let i = 0; i < TAU_N; i++) {
-    for (const f of FINGERS) fAct[f].time = i * TAU_STEP;
-    mixer.update(0); root.updateMatrixWorld(true);
-    for (const f of FINGERS) fingerPoints(f, table[f], i * 3 * SAMP * 4);
+  // 잔이 놓이는 자리(손 모델 좌표): 다 잡은 자세에서 엄지 끝과 검지 가운데 마디 사이. 손은 이 점이 잔 굽 바닥 중심에 오도록 놓인다.
+  const ANCHOR = new THREE.Vector3();
+  {
+    const tip = new THREE.Vector3(), yAx = new THREE.Vector3(), inv = new THREE.Matrix4(), [, t2, t3] = fb.thumb;
+    for (const f of FINGERS) curl[f] = 1; poseFingers(); root.updateMatrixWorld(true); inv.copy(root.matrixWorld).invert();
+    yAx.setFromMatrixColumn(t3.matrixWorld, 1).normalize();
+    tip.setFromMatrixPosition(t3.matrixWorld).addScaledVector(yAx, new THREE.Vector3().setFromMatrixPosition(t3.matrixWorld).distanceTo(new THREE.Vector3().setFromMatrixPosition(t2.matrixWorld)) * 0.85);
+    ANCHOR.setFromMatrixPosition(fb.f_index[1].matrixWorld).add(tip).multiplyScalar(0.5).applyMatrix4(inv);
+    ANCHOR.add(new THREE.Vector3(num('hax', 0), num('hay', -0.025), num('haz', 0.03)));   // 손을 2.5cm 올리고 3cm 앞으로: 굽 아랫부분이 엄지·검지 사이에 끼고 손가락 뒤로 들어간다
+    for (const f of FINGERS) curl[f] = 0;
   }
-  // 손바닥(손가락과 무관, 고정) 표본점
-  const palmPts = [];
-  for (const n of ['DEF-palm01R', 'DEF-palm02R', 'DEF-palm03R', 'DEF-palm04R']) {
-    const bn = bone(n); if (!bn) continue;
-    const h0 = new THREE.Vector3().setFromMatrixPosition(bn.matrixWorld).applyMatrix4(inv);
-    const ax = new THREE.Vector3().setFromMatrixColumn(bn.matrixWorld, 1).transformDirection(inv);
-    for (let i = 0; i < 5; i++) { const pnt = h0.clone().addScaledVector(ax, 0.07 * i / 4); palmPts.push(pnt.x, pnt.y, pnt.z, 0.010); }
-  }
-  // 다가오는 방향 F: 잔 축에서 손가락 뿌리(MCP) 중심 쪽(수평). 손은 이쪽으로 비켜 선 채 올라와 마지막에 미끄러져 들어온다.
-  const F = new THREE.Vector3();
-  for (const f of ['f_index', 'f_middle', 'f_ring', 'f_pinky']) F.add(new THREE.Vector3().setFromMatrixPosition(fb[f][0].matrixWorld).applyMatrix4(inv));
-  F.multiplyScalar(0.25).sub(GRIP); F.y = 0; F.normalize();
-  let EMAX = num('hemax', 0.03), EZ = num('hez', 0.06);
-  { const a = THREE.MathUtils.degToRad(num('hfa', 255)); F.set(Math.cos(a), 0, Math.sin(a)); }
-  // 최종 높이: 참고 포즈(굽을 손바닥 위에서 쥠)보다 LOW만큼 낮게 — 엄지·검지가 굽을 잡고 중지·약지·소지는 굽 아래에서 자연스럽게 접힌다(oryzo)
-  const LOW = num('hlowd', 0.03);
-  const offE = d => EMAX * sm(0, EZ, d - LOW);
-  // 검증용: τ=1(쥔 손)에서 손가락 끝점(손 로컬)
-  window.__kjyHandTip = () => { const o = {}; for (const f of FINGERS) { const k = (40 * 3 * SAMP + 3 * SAMP - 1) * 4; o[f] = [table[f][k], table[f][k + 1], table[f][k + 2]].map(v => +v.toFixed(4)); } return o; };
-
-  // ----- 잔 단면(회전체): 본 잔 로컬 좌표 기준, 본 잔 높이 비율 단위 -----
-  const NB = 160, H0 = -0.15, H1 = 1.25;
+  // 본 잔(손이 붙잡는 잔)
   let mainMesh = null, mainBox = null;
   function findMain() {
     if (mainMesh && mainMesh.parent) return mainMesh;
@@ -367,100 +358,6 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
     if (mainMesh) { mainCupMesh = mainMesh; const g = mainMesh.geometry; if (!g.boundingBox) g.computeBoundingBox(); mainBox = g.boundingBox; }
     return mainMesh;
   }
-  function profileOf(rec) {
-    if (rec.prof) return rec.prof;
-    if (!findMain()) return null;
-    const pos = rec.mesh.geometry.attributes.position; if (!pos) return null;
-    mainMesh.updateWorldMatrix(true, false); rec.mesh.updateWorldMatrix(true, false);
-    const M = new THREE.Matrix4().copy(mainMesh.matrixWorld).invert().multiply(rec.mesh.matrixWorld);
-    const Hm = mainBox.max.y - mainBox.min.y, cx = (mainBox.min.x + mainBox.max.x) / 2, cz = (mainBox.min.z + mainBox.max.z) / 2;
-    const R = new Float32Array(NB); const v = new THREE.Vector3();
-    for (let i = 0; i < pos.count; i++) {
-      v.fromBufferAttribute(pos, i).applyMatrix4(M);
-      const h = (v.y - mainBox.min.y) / Hm; const k = Math.floor((h - H0) / (H1 - H0) * NB);
-      if (k < 0 || k >= NB) continue;
-      const r = Math.hypot(v.x - cx, v.z - cz) / Hm; if (r > R[k]) R[k] = r;
-    }
-    // 빈 칸·안쪽 면만 있는 칸 보정: 이웃 ±2칸 최대(보수적으로)
-    const S = new Float32Array(NB);
-    for (let k = 0; k < NB; k++) { let m = 0; for (let j = Math.max(0, k - 2); j <= Math.min(NB - 1, k + 2); j++) m = Math.max(m, R[j]); S[k] = m; }
-    let lo = 0; while (lo < NB && R[lo] === 0) lo++;
-    rec.prof = { R: S, bottom: H0 + lo / NB * (H1 - H0), Rb: R[lo] || S[lo] };
-    return rec.prof;
-  }
-  // 지금 보이는 잔들의 합집합 단면
-  const U = { R: new Float32Array(NB), bottom: 0, Rb: 0 };
-  function buildUnion() {
-    U.R.fill(0); U.bottom = 9; U.Rb = 0;
-    for (const c of cups) {
-      if (c.mesh.visible === false || c.raw <= 0.02) continue;
-      const p = profileOf(c); if (!p) continue;
-      for (let k = 0; k < NB; k++) if (p.R[k] > U.R[k]) U.R[k] = p.R[k];
-      if (p.bottom < U.bottom) { U.bottom = p.bottom; } U.Rb = Math.max(U.Rb, p.Rb);
-    }
-    if (U.bottom === 9) { U.bottom = 0; }
-  }
-  function penPoint(x, y, z, r) {
-    const hz = (y - GRIP.y) / CUP_H, rr = r / CUP_H;
-    if (hz < U.bottom - rr || hz > H1) return 0;
-    const rho = Math.hypot(x - GRIP.x, z - GRIP.z) / CUP_H;
-    const k = Math.floor((Math.min(H1 - 1e-6, Math.max(U.bottom, hz)) - H0) / (H1 - H0) * NB);
-    const R = U.R[Math.min(NB - 1, Math.max(0, k))];
-    if (R <= 0) return 0;
-    const side = R + rr - rho;
-    const under = hz - U.bottom + rr;
-    return Math.max(0, Math.min(side, under)) * CUP_H;
-  }
-  const EPS = 0.0004;   // 0.4mm 허용
-  function fingerPen(f, tau, d) {
-    tau = Math.min(2, Math.max(0, tau)); const fi = tau / TAU_STEP; const i0 = Math.min(TAU_N - 2, Math.floor(fi)), w = fi - i0;
-    const A = table[f]; let m = 0; const n = 3 * SAMP; const e = offE(d);
-    for (let s = 0; s < n; s++) {
-      const a = (i0 * n + s) * 4, b = a + n * 4;
-      const x = A[a] + (A[b] - A[a]) * w + F.x * e, y = A[a + 1] + (A[b + 1] - A[a + 1]) * w - d, z = A[a + 2] + (A[b + 2] - A[a + 2]) * w + F.z * e;
-      const p = penPoint(x, y, z, A[a + 3]); if (p > m) m = p;
-    }
-    return m;
-  }
-  const free = (f, tau, d) => fingerPen(f, tau, d) <= EPS;
-  function palmPen(d) {
-    const e = offE(d); let m = 0;
-    for (let i = 0; i < palmPts.length; i += 4) { const p = penPoint(palmPts[i] + F.x * e, palmPts[i + 1] - d, palmPts[i + 2] + F.z * e, palmPts[i + 3]); if (p > m) m = p; }
-    return m;
-  }
-  // 현재 τ에서 가장 가까운(목표 쪽 우선) 충돌 없는 τ
-  function nearestFree(f, tau, d, goal) {
-    if (free(f, tau, d)) return tau;
-    const dir = goal >= tau ? 1 : -1;
-    for (let k = 1; k <= 80; k++) {
-      const a = tau + dir * k * TAU_STEP, b = tau - dir * k * TAU_STEP;
-      if (a >= 0 && a <= 2 && free(f, a, d)) return a;
-      if (b >= 0 && b <= 2 && free(f, b, d)) return b;
-    }
-    return null;
-  }
-  // 상태: d = 손이 잔 축을 따라 아래로 내려간 양(손 로컬 미터), tau = 손가락별 진행값
-  const st = { d: 0.4, tau: { thumb: 0, f_index: 0, f_middle: 0, f_ring: 0, f_pinky: 0 }, init: false };
-  function solve(Dt, goal) {
-    // 0) 잔이 바뀌어 지금 자세가 겹치면 가장 가까운 비충돌 자세로
-    for (const f of FINGERS) { const t = nearestFree(f, st.tau[f], st.d, goal[f]); if (t !== null) st.tau[f] = t; }
-    // 1) 손 높이: 목표 쪽으로 2mm씩. 막는 손가락은 비켜 가게(가장 가까운 비충돌 τ), 비킬 수 없으면 거기서 멈춤
-    const stepD = 0.002, n = Math.min(250, Math.ceil(Math.abs(Dt - st.d) / stepD));
-    for (let i = 0; i < n; i++) {
-      const nd = st.d + Math.sign(Dt - st.d) * Math.min(stepD, Math.abs(Dt - st.d));
-      const nt = {}; let ok = palmPen(nd) <= 0.0012;
-      if (ok) for (const f of FINGERS) { const t = nearestFree(f, st.tau[f], nd, goal[f]); if (t === null) { ok = false; break; } nt[f] = t; }
-      if (!ok) break;
-      st.d = nd; Object.assign(st.tau, nt);
-    }
-    // 2) 손가락: 목표 τ 쪽으로, 잔에 닿으면 멈춤
-    for (const f of FINGERS) {
-      const g = goal[f]; let t = st.tau[f];
-      while (Math.abs(g - t) > 1e-6) { const nt = t + Math.sign(g - t) * Math.min(TAU_STEP, Math.abs(g - t)); if (!free(f, nt, st.d)) break; t = nt; }
-      st.tau[f] = t;
-    }
-  }
-
   // ----- 포인터 → 손가락 호버 -----
   const hover = {}, hoverT = {}; for (const f of FINGERS) { hover[f] = 0; hoverT[f] = 0; }
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let pointer = null, pointerDirty = false;
@@ -550,7 +447,6 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
   // ----- 매 프레임(렌더 직전) -----
   let seriesS = 0, last = performance.now(), inited = false, lastRender = -1;
   const camPos = new THREE.Vector3(), cbase = new THREE.Vector3(), axis = new THREE.Vector3(), q = new THREE.Quaternion(), q2 = new THREE.Quaternion(), off = new THREE.Vector3(), fwd = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0), zNow = new THREE.Vector3(), cr = new THREE.Vector3();
-  const tauShow = { thumb: 0, f_index: 0, f_middle: 0, f_ring: 0, f_pinky: 0 };
   const prevOnBefore = scene.onBeforeRender;
   scene.onBeforeRender = function (renderer, sc, camera) {
     if (prevOnBefore) prevOnBefore.apply(this, arguments);
@@ -592,31 +488,28 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
     fwd.copy(camPos).sub(cbase); fwd.addScaledVector(axis, -fwd.dot(axis)).normalize();
     zNow.set(0, 0, 1).applyQuaternion(q);
     const ang = Math.atan2(cr.crossVectors(zNow, fwd).dot(axis), zNow.dot(fwd));
-    q2.setFromAxisAngle(axis, ang + THREE.MathUtils.degToRad(num('hyaw', 0))); q.premultiply(q2);
+    q2.setFromAxisAngle(axis, ang + THREE.MathUtils.degToRad(num('hyaw', 200))); q.premultiply(q2);   // 손등 쪽에서 본 모습(oryzo): 엄지는 왼쪽, 검지는 오른쪽 위에서 감싼다
     hand.quaternion.copy(q); hand.scale.setScalar(s);
 
     // 등장/퇴장 목표 높이(손 로컬 미터): 화면 아래 밖까지
     const dist = camPos.distanceTo(cbase);
     const vh = 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2);
     const dropW = vh * 0.62 + 0.16 * s;
-    const Dt = LOW + (Math.max((1 - rise) * (1 - rise), sink * sink) * dropW) / s;
+    const Dt = (Math.max((1 - rise) * (1 - rise), sink * sink) * dropW) / s;
 
-    // 호버 목표(쥔 상태에서만)
+    // 손가락: 처음엔 살짝 접힌 채(CURL0) 올라와 스크롤할수록 잡는다. 호버한 손가락은 살짝 펴진다(잡은 뒤에만).
     if (pointerDirty || pointer) { pointerDirty = false; pickFinger(s, renderer); }
     const gripped = clamp01((close - 0.9) / 0.1);
-    for (const f of FINGERS) { const t = hoverT[f] * gripped; hover[f] = damp(hover[f], t, t > hover[f] ? 6 : 3, dt); }
-    const goal = {}; for (const f of FINGERS) goal[f] = CURL0 + (1 - CURL0) * clamp01(close) + hover[f] * 0.85;
+    for (const f of FINGERS) {
+      const t = hoverT[f] * gripped; hover[f] = damp(hover[f], t, t > hover[f] ? 6 : 3, dt);
+      const goal = CURL0 + (1 - CURL0) * clamp01(close) - 0.45 * hover[f];
+      curl[f] = st.init ? damp(curl[f], goal, 10, dt) : goal;
+    }
+    st.d = Dt; st.init = true;
+    restAct.time = 1; mixer.update(0); poseFingers();
 
-    // 충돌 처리
-    buildUnion();
-    if (!st.init) { st.d = Math.max(Dt, 0.4); for (const f of FINGERS) { st.tau[f] = CURL0; tauShow[f] = CURL0; } st.init = true; }
-    solve(Dt, goal);
-    for (const f of FINGERS) { tauShow[f] = damp(tauShow[f], st.tau[f], 22, dt); fAct[f].time = tauShow[f]; }
-    restAct.time = 1;
-    mixer.update(0);
-
-    off.copy(GRIP).multiplyScalar(s).applyQuaternion(q);
-    hand.position.copy(cbase).sub(off).addScaledVector(axis, -st.d * s).add(fwd.copy(F).multiplyScalar(offE(st.d) * s).applyQuaternion(q));
+    off.copy(ANCHOR).multiplyScalar(s).applyQuaternion(q);
+    hand.position.copy(cbase).sub(off).addScaledVector(axis, -st.d * s);
     hand.updateMatrixWorld(true);
     if (wristBone && elbowBone) {
       wristBone.getWorldPosition(_w); elbowBone.getWorldPosition(_el);
@@ -625,22 +518,11 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
       SSS.kjyWrist.value.copy(_w).applyMatrix4(camera.matrixWorldInverse);
       SSS.kjyArmFade.value.set(lf * ARM_FADE[0], lf * ARM_FADE[1]);
     }
-    let mn = 1; for (const f of FINGERS) mn = Math.min(mn, tauShow[f]);
+    let mn = 1; for (const f of FINGERS) mn = Math.min(mn, curl[f]);
     skin.aoMapIntensity = 0.35 + 0.65 * clamp01(mn);
   };
   window.__kjyHand = {
-    hand, mesh, mixer, st, hover, tauShow, cups, get s() { return hand.scale.x; },
-    pen() { buildUnion(); const o = {}; for (const f of FINGERS) o[f] = +fingerPen(f, tauShow[f], st.d).toFixed(5); return o; },
-    path(maxD = 0.12) { buildUnion(); const out = []; for (let d = maxD; d >= -1e-9; d -= 0.002) { const r = { d: +d.toFixed(3), palm: +palmPen(d).toFixed(4) }; for (const f of FINGERS) { let any = null; for (let t = 0; t <= 2.0001; t += TAU_STEP) if (free(f, t, d)) { any = any === null ? +t.toFixed(3) : any; } r[f] = any; } out.push(r); } return out.filter(r => r.palm > 0.0012 || FINGERS.some(f => r[f] === null)); },
-    F: () => F.toArray().map(v => +v.toFixed(3)),
-    pick(x, y) { pointer = { x, y }; pickFinger(hand.scale.x, lastRenderer || { domElement: document.querySelector('canvas') }); const cv = (lastRenderer || {}).domElement; return { hoverT: { ...hoverT }, canvas: cv ? [cv.className, cv.getBoundingClientRect().width] : null, mm: matchMedia('(hover: hover) and (pointer: fine)').matches }; },
-    search() { buildUnion(); const res = []; const F0 = F.clone(), E0 = EMAX, Z0 = EZ;
-      for (let ang = 0; ang < 360; ang += 15) for (const em of [0.03, 0.05, 0.07, 0.09]) for (const ez of [0.03, 0.06, 0.1]) {
-        F.set(Math.cos(ang * Math.PI / 180), 0, Math.sin(ang * Math.PI / 180)); EMAX = em; EZ = ez;
-        let bad = 0, worst = null;
-        for (let d = 0.2; d >= -1e-9; d -= 0.002) { let ok = palmPen(d) <= 0.0012; if (ok) for (const f of FINGERS) { let any = false; for (let t = 0; t <= 2.0001; t += 0.05) if (free(f, t, d)) { any = true; break; } if (!any) { ok = false; worst = f; break; } } if (!ok) bad++; }
-        res.push([ang, em, ez, bad, worst]); }
-      F.copy(F0); EMAX = E0; EZ = Z0; return res.sort((a, b) => a[3] - b[3] || a[1] - b[1]).slice(0, 12); },
-    union() { buildUnion(); return { bottom: U.bottom, R: Array.from(U.R).filter((_, i) => i % 8 === 0).map(v => +v.toFixed(3)) }; }
+    hand, mesh, mixer, st, hover, curl, cups, get s() { return hand.scale.x; },
+    pick(x, y) { pointer = { x, y }; pickFinger(hand.scale.x, lastRenderer || { domElement: document.querySelector('canvas') }); return { hoverT: { ...hoverT } }; }
   };
 })();

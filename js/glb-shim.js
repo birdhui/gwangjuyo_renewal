@@ -14,7 +14,8 @@ return load(m[1]).then(function(){var n=m[1],c=window.__glbC||(window.__glbC={})
 (function(){var st=document.createElement('style');st.textContent='::selection{background:#8FA9C4;text-shadow:none}::-moz-selection{background:#8FA9C4;text-shadow:none}';(document.head||document.documentElement).appendChild(st)})();
 (function(){var st=document.createElement('style');st.textContent='html{scrollbar-width:none;-ms-overflow-style:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}';(document.head||document.documentElement).appendChild(st)})();
 
-/* ===== 시리즈 배경: 기존 무지개 테두리 발광 제거 + 비정형 블롭 ===== */
+/* ===== 시리즈 배경: 기존 무지개 테두리 발광 제거 + 비정형 블롭 =====
+   블롭은 가는 테두리 선과 짧은 번짐만(테두리 굵기·안팎 번짐·바깥 후광을 줄여 흐릿한 느낌을 걷어냄) */
 (function(){
   // 1) 3D 장면 마지막 패스의 가장자리 발광·물결 왜곡 제거(셰이더 문자열 치환) — 소리잔·손은 왜곡하지 않음
   try{
@@ -99,14 +100,14 @@ void main(){
   float dn=clamp(-f/rad,0.,1.);
   float inside=smoothstep(1.,-1.,dp);
   float din=max(max(-dp,-f*uGeo.x*.9),0.),dout=max(dp,0.);
-  float cw=max(1.6*S,.9*px);
+  float cw=max(1.0*S,.7*px);   // 테두리 선: 가늘게
   float core=exp(-pow(dp/cw,2.));
   float gMid=exp(-abs(dp)/(7.*S));
   float core2=exp(-pow(dp2/(cw*.8),2.));
-  float gIn=exp(-din/(mix(42.,65.,warm)*S))*inside*(1.-smoothstep(.35,.8,dn));
-  float gOutN=exp(-dout/(13.*S))*(1.-inside);
-  float gOutF=exp(-dout/(50.*S))*(1.-inside);
-  float halo=exp(-dout/(160.*S))*(1.-inside);
+  float gIn=exp(-din/(mix(26.,40.,warm)*S))*inside*(1.-smoothstep(.35,.8,dn));
+  float gOutN=exp(-dout/(8.*S))*(1.-inside);
+  float gOutF=exp(-dout/(32.*S))*(1.-inside);
+  float halo=exp(-dout/(120.*S))*(1.-inside);
   // 내부: 왼쪽 위 앰버 → 웜 그레이 → 오른쪽 아래 블루, 형태와 함께 흐름
   vec2 q=v/.278;
   float sd=dot(q,vec2(-.92,.36))*.85+.16*sin(q.x*1.7+q.y*1.1+t*.21)+.12*sin(q.y*2.3-q.x*.8-t*.16);
@@ -114,13 +115,13 @@ void main(){
   vec3 ic=sd>0.?mix(uM,uW,sd*.8):mix(uM,uC,min(1.,-sd*1.5));
   float plate=mix(.22,.66,.5+.5*sd)*(1.-.5*(1.-smoothstep(0.,.3,dn))*(1.-warm));
   vec3 c=ic*plate*inside
-    +mix(ec,vec3(1.,.985,.95),clamp(H*.75,0.,.85))*core*(.05+1.8*H)
-    +hot*gMid*.45*Hg
-    +hot*core2*(.015+.30*H)
-    +mix(ec,vec3(.95,.93,.9),.22*warm)*gIn*2.0*Hg*(1.+.3*(1.-warm))
-    +hot*gOutN*.55*Hg*(1.25-.4*warm)
-    +ec*gOutF*.30*Hg*(1.3-.6*warm)
-    +mix(uM,uW,.6)*halo*1.05*(.10+.90*lobe(a,3.0,4.))*(.35+.65*min(Hs,1.));
+    +mix(ec,vec3(1.,.985,.95),clamp(H*.75,0.,.85))*core*(.04+.95*H)
+    +hot*gMid*.2*Hg
+    +hot*core2*(.01+.12*H)
+    +mix(ec,vec3(.95,.93,.9),.22*warm)*gIn*1.15*Hg*(1.+.3*(1.-warm))
+    +hot*gOutN*.3*Hg*(1.25-.4*warm)
+    +ec*gOutF*.12*Hg*(1.3-.6*warm)
+    +mix(uM,uW,.6)*halo*.45*(.10+.90*lobe(a,3.0,4.))*(.35+.65*min(Hs,1.));
   float m=max(max(c.r,c.g),c.b);c*=(1.-exp(-m*1.4))/max(m,1e-4);
   float al=clamp(max(max(c.r,c.g),c.b)*uOp,0.,1.);
   vec3 o=min(c*uOp,vec3(al));
