@@ -617,20 +617,21 @@ void main(){
       fit();addEventListener("resize",fit);if(window.ResizeObserver)new ResizeObserver(fit).observe(first);
     }
     if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-    const sm=t=>{t=Math.min(1,Math.max(0,t));return t*t*(3-2*t)};
-    let last="";
-    (function loop(){
+    // oryzo SocialSection과 같이: 스크롤 위치에 맞춰 펼치지 않고, 사진 줄의 절반이 화면에 보이면
+    // 시간으로(약 0.67초, expoInOut) 모든 사진이 왼쪽→오른쪽으로 한 번에 펼쳐진다.
+    // 사진이 화면 아래로 완전히 내려갈 만큼 다시 올리면 접힌 상태로 돌아가, 다시 내려오면 또 펼쳐진다.
+    const expoInOut=t=>t<=0?0:t>=1?1:t<.5?Math.pow(2,20*t-10)/2:(2-Math.pow(2,-20*t+10))/2;
+    let clip=0,lastT=performance.now(),shown=-1;
+    (function loop(now){
       requestAnimationFrame(loop);
-      const top=g.getBoundingClientRect().top,ih=innerHeight;
-      if(top>ih*1.05||top<-ih*.5&&last==="done")return;
-      const e=1-top/ih;           // 0: 갤러리 위가 화면 아래 끝, 1: 화면 위 끝
-      const key=e.toFixed(4);if(key===last)return;last=e>=1.6?"done":key;
-      items.forEach((it,i)=>{
-        const k=Math.min(i,3),r=sm((e-.05-k*.13)/.55);
-        it.style.setProperty("--kjy-rv-hide",(1-r).toFixed(4));
-        it.style.setProperty("--kjy-rv-scale",(1+.08*(1-r)).toFixed(4));
-      });
-    })();
+      const dt=Math.min(.1,Math.max(0,(now-lastT)/1000));lastT=now;
+      const ref=first||g,rr=ref.getBoundingClientRect(),ih=innerHeight;
+      if(rr.top>=ih)clip=0;                                   // 사진이 화면에서 완전히 사라짐 → 다시 접기
+      else if(ih-rr.top>=rr.height*.5||clip>0)clip=Math.min(1,clip+dt*1.5); // 절반이 보이면 자동으로 펼침
+      const v=innerWidth<768?1:expoInOut(clip);if(v===shown)return;shown=v;
+      const hide=(1-v).toFixed(4);
+      items.forEach(it=>{it.style.setProperty("--kjy-rv-hide",hide);it.style.setProperty("--kjy-rv-scale","1")});
+    })(performance.now());
   }
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",setup);else setup();
 })();
