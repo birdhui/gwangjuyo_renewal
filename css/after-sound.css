@@ -140,7 +140,7 @@ html body #beauty .beauty-marble{width:min(84svh,82vw)!important;filter:none!imp
 @media(prefers-reduced-motion:no-preference){html body .kjy-cup-rail>.people-cup-visual{position:sticky!important;left:0!important;top:0!important;transform:none!important;z-index:auto}}
 /* 히어로 로고 약 14% 축소(36vw·700 → 31vw·600) — style.css·make.css의 원래 값을 덮어씀. 문구 '오래 쓰는 아름다움'도 같은 폭(로고 오른쪽 끝 정렬) */
 @media(min-width:768px){html body .site-header .brand-image-window,html body .hero-topline{width:var(--logo-width,clamp(260px,31vw,600px))}}
-@media(min-width:1441px){html body .site-header .brand-image-window,html body .hero-topline{width:calc(max(260px,31vw)*(1 - var(--hero-shrink,0)) + max(96px,8vw)*var(--hero-shrink,0))}}
+@media(min-width:1441px){html body .site-header .brand-image-window,html body .hero-topline{width:calc(max(260px,31vw)*(1 - var(--hero-shrink,0)) + max(84px,7vw)*var(--hero-shrink,0))}}
 /* 가마 장면 임시 복원(기존 베이킹 가마, 타이포 없음): 물레 암전 뒤 가마 중심에서부터 서서히 퍼지며 나타난다 */
 @media(prefers-reduced-motion:no-preference){
   html body .make-fire{height:500svh}
