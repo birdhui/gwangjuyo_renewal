@@ -145,8 +145,6 @@ body.beauty-light .sc-scroll{color:var(--after-ink,#2a1d17)}
 body.beauty-light .sc-scroll .scroll-icon::before{border-color:currentColor;opacity:calc(.62 * var(--cue-ring-a,0))}
 html:root body .hero-rail.hero-rail{opacity:var(--rail-vis,1)!important}
 html.rail-off .rail-scroll{display:none!important}
-/* r35: 풍경 섹션 제목(잔 하나로 달라지는 풍경) 약 10% 축소 */
-html body .scenery-heading{font-size:clamp(20px,2.25vw,43px)}
 /* 쓰임으로 이어지는 아름다움 — 구슬 크기(화면 높이·너비의 62%) */
 html body #beauty .beauty-marble{width:min(62svh,62vw)!important}
 @media(max-width:767px){html body #beauty .beauty-marble{width:62vw!important}}
