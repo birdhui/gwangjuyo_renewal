@@ -232,7 +232,8 @@ void main(){
   const st = document.createElement('style');
   st.textContent =
     '.kjy-people-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background:#0e0b09;visibility:hidden}'
-    + '.kjy-people-bg::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 75% 70% at 50% 18%,#583426 0%,#3a2419 26%,#211611 52%,rgba(14,11,9,0) 82%);opacity:var(--kjy-people-glow,1)}'
+    /* oryzo 후기 화면 실측: 바탕 #1a1714, 화면 위 가운데 가장자리에서 가장 밝고(#5f3e25) 둥글게 퍼진다(반지름 약 0.68화면 높이) */
+    + '.kjy-people-bg::before{content:"";position:absolute;inset:0;background:radial-gradient(circle 68svh at 50% 0,#5f3e25 0%,#533622 16%,#48301d 26%,#38261a 46%,#241b15 76%,#1a1714 100%) #1a1714;opacity:var(--kjy-people-glow,0)}'
     + 'html.kjy-people-on .kjy-people-bg{visibility:visible}'
     + 'html.kjy-people-on :is(.people-story,.review-story,.editorial-gallery,.editorial-sticky){background:transparent!important}'
     + '.people-cup-visual{left:0!important;top:0!important;width:100vw!important;height:100svh!important;transform:none!important}'
@@ -247,9 +248,10 @@ void main(){
     const v = y >= pe.offsetTop - ih && y < ft.offsetTop + ft.offsetHeight;
     if (v !== on) { on = v; document.documentElement.classList.toggle('kjy-people-on', v); }
     if (v) {
-      const k = Math.min(1, Math.max(0, (y - (ft.offsetTop - ih)) / (ih * .85)));
-      const g = (1 - k * k * (3 - 2 * k)).toFixed(3);
-      if (g !== lastG) { lastG = g; document.documentElement.style.setProperty('--kjy-people-glow', g); }
+      // 섹션이 아래에서 올라와 화면을 채우는 동안 위 가운데 빛이 점점 밝아지고, 푸터가 올라오는 만큼 다시 어두워진다
+      const sm = t => { t = Math.min(1, Math.max(0, t)); return t * t * (3 - 2 * t); };
+      const g = (sm((y - (pe.offsetTop - ih)) / ih) * (1 - sm((y - (ft.offsetTop - ih)) / (ih * .85)))).toFixed(3);
+      if (g !== lastG) { lastG = g; document.querySelector('.kjy-people-bg').style.setProperty('--kjy-people-glow', g); }
     }
   };
   addEventListener('scroll', tick, { passive: true }); addEventListener('resize', tick); setInterval(tick, 500);
