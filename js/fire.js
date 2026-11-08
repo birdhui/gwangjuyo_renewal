@@ -1,8 +1,11 @@
 import { createBeats } from './beats.js';
 
-// The kiln was rendered offline in Blender Cycles, one light at a time, from this fixed camera:
-// studio light (bisque and glazed), the burners, the hot chamber's own glow, and the ware's heat.
-// Light adds linearly, so the page relights the photograph live by mixing those passes.
+// 가마: 이천 수광리 오름가마 사진(img/kiln/plate.webp)을 바탕으로, 스크롤에 따라 불을 지펴 굽고 식힌다.
+//  - 바탕은 불이 한창일 때의 사진 그대로. 불이 약할 때는 가마 안을 어둡게, 몸체는 달빛 정도로 낮추고,
+//    불빛이 닿는 정도(mask.png B)만큼 불의 세기·일렁임을 따라 밝아진다.
+//  - 가마 안 불길(mask.png G)은 위로 흐르는 잡음으로 살짝 밀려 그려지고, 혀처럼 솟는 밝기 변화가 더해져 일렁인다.
+//  - 선반 위 소리잔 하나: 초벌 → 유약(시유) 잔으로 바뀌고, 가장 뜨거울 때는 잔 자체가 불빛처럼 달아오른다.
+//  - 장작 불티: 가마 안에서 솟는 불티, 입구 밖으로 튀는 불티, 굴뚝 위로 날리는 불티(모두 화면 GPU 점, 상태 없이 시간으로 계산).
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -10,10 +13,8 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
-const SCREEN = {"b-10_base": [0.4585324823856354, 0.17827177047729492, 13.505341529846191], "b-10_top": [0.4583415389060974, 0.3486948013305664, 13.44344425201416], "b-11_base": [0.4522262215614319, 0.14694054424762726, 12.557284355163574], "b-11_top": [0.4519895911216736, 0.3301388621330261, 12.49538803100586], "b-12_base": [0.44489002227783203, 0.11049213260412216, 11.609228134155273], "b-12_top": [0.4445946216583252, 0.30853596329689026, 11.547330856323242], "b10_base": [0.7850977182388306, 0.17310279607772827, 13.339193344116211], "b10_top": [0.786426842212677, 0.3456343710422516, 13.27729606628418], "b11_base": [0.8036927580833435, 0.14095602929592133, 12.391136169433594], "b11_top": [0.8052173852920532, 0.3265930116176605, 12.329239845275879], "b12_base": [0.8253689408302307, 0.10348252207040787, 11.443079948425293], "b12_top": [0.8271384835243225, 0.3043793737888336, 11.381182670593262], "cup": [0.6242101192474365, 0.4150647819042206, 11.635396003723145]};
 const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const fit = (v, a, b) => clamp((v - a) / (b - a));
-const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const sm = t => t * t * (3 - 2 * t);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function blackbody(K, out = new THREE.Color()) {
@@ -24,148 +25,184 @@ function blackbody(K, out = new THREE.Color()) {
   return out.setRGB(clamp(r / 255), clamp(g / 255), clamp(b / 255), THREE.SRGBColorSpace);
 }
 
+// 사진 좌표(0~1, 아래가 0): 가마 입구 가운데, 선반 위 소리잔 자리(1672×941 사진 기준 px에서 환산)
+const IMG = [1672, 941], IMG_ASPECT = IMG[0] / IMG[1];
+const uvOf = (x, y) => [x / IMG[0], 1 - y / IMG[1]];
+const MOUTH = uvOf(790, 600);
+const CUP_PX = { cx: 818, bottom: 566, h: 84 };   // 윗 선반 가운데 고리(그을린 자국) 안에 굽이 앉는다
+const CUP_W = CUP_PX.h * 263 / 300;
+const CUP = [ (CUP_PX.cx - CUP_W / 2) / IMG[0], 1 - CUP_PX.bottom / IMG[1], CUP_W / IMG[0], CUP_PX.h / IMG[1] ];   // u0, v0, du, dv
+
 const canvas = document.getElementById('fire-gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
 const sceneDpr = () => Math.min(devicePixelRatio || 1, innerWidth >= 2560 ? 1 : 1.5);
 renderer.setPixelRatio(sceneDpr());
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+renderer.toneMapping = THREE.NoToneMapping;   // 사진 색을 그대로(밝기만 불이 바꾼다)
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-const IMG_ASPECT = 16 / 9;
 
-// ---------- the relit photograph ----------
-const NAMES = ['studio', 'studio_glaze', 'fire', 'glow', 'ware'];
+// ---------- 가마 사진 ----------
 const loader = new THREE.TextureLoader();
-const scales = await (await fetch('img/fire/scales.json')).json();
-const tex = Object.fromEntries(await Promise.all(NAMES.map(n => new Promise(res => loader.load(`img/fire/${n}.webp`, t => { t.colorSpace = THREE.NoColorSpace; t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; res([n, t]); })))));
+const load = (u, srgb) => new Promise(res => loader.load(u, t => { t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; res(t); }));
+const [tP, tM, tC, tCB] = await Promise.all([load('img/kiln/plate.webp', true), load('img/kiln/mask.png', false), load('img/kiln/cup.webp', true), load('img/kiln/cup-bisque.webp', true)]);
+const QUAD_VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }';
+const NOISE = `
+  float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
+  float fbm(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 4; i++) { s += a * n(p); p = p * 2.03 + 1.7; a *= .5; } return s; }`;
 const U = {
-  tS: { value: tex.studio }, tSG: { value: tex.studio_glaze }, tF: { value: tex.fire }, tG: { value: tex.glow }, tW: { value: tex.ware },
-  sS: { value: scales.studio }, sSG: { value: scales.studio_glaze }, sF: { value: scales.fire }, sG: { value: scales.glow }, sW: { value: scales.ware },
-  uKiln: { value: new THREE.Vector2(.645, .5) }, uSx: { value: 1 }, uOx: { value: 0 }, uZw: { value: 0 }, uMx: { value: new THREE.Vector2(.36, .62) }, kS: { value: 1 }, glaze: { value: 0 }, cF: { value: new THREE.Vector3() }, cG: { value: new THREE.Vector3() }, cW: { value: new THREE.Vector3() },
+  tP: { value: tP }, tM: { value: tM }, tC: { value: tC }, tCB: { value: tCB },
+  uT: { value: 0 }, uHeat: { value: 0 }, uFlick: { value: 1 }, uGlaze: { value: 0 }, uAfter: { value: 0 }, uAmb: { value: 1 },
+  uFire: { value: new THREE.Color() }, uHot: { value: new THREE.Color() }, uCup: { value: new THREE.Vector4(...CUP) },
 };
 const photo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
   uniforms: U,
-  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+  vertexShader: QUAD_VS,
   fragmentShader: `
     varying vec2 vUv;
-    uniform vec2 uKiln; uniform float uSx, uOx, uZw; uniform vec2 uMx;
-    uniform sampler2D tS, tSG, tF, tG, tW; uniform float sS, sSG, sF, sG, sW, kS, glaze; uniform vec3 cF, cG, cW;
-    vec3 dec(sampler2D t, float s){ vec3 v = pow(texture2D(t, vUv).rgb, vec3(2.2)); v = min(v, vec3(.996)); return s * v / (1. - v); }
+    uniform sampler2D tP, tM, tC, tCB; uniform float uT, uHeat, uFlick, uGlaze, uAfter, uAmb; uniform vec3 uFire, uHot; uniform vec4 uCup;
+    ${NOISE}
     void main(){
-      vec3 studio = mix(dec(tS, sS), dec(tSG, sSG), glaze) * kS;
-      vec3 c = studio + dec(tF, sF) * cF + dec(tG, sG) * cG + dec(tW, sW) * cW;
-      // 가마를 화면 한가운데에 작게 두고, 사진의 가장자리는 어둠으로 풀어 장면이 떠 있는 것처럼 보이게 한다
-      vec2 dd = abs(vUv - uKiln);
-      float m = (1. - smoothstep(.22, .345, dd.x)) * (1. - smoothstep(.34, .49, dd.y));
-      // 크게 당겨졌을 때는 화면 가운데 폭만 남기고 양옆을 어둠으로 거둔다
-      float nx = abs((vUv.x - .5) * 2. * uSx + uOx);
-      m *= mix(1., 1. - smoothstep(uMx.x, uMx.y, nx), uZw);
-      gl_FragColor = vec4(c, m);
-    }`,
-  transparent: true, depthTest: false, depthWrite: false,
-}));
-photo.renderOrder = -1;
-// 배경: 위의 Rewind·흙 장면에서 이어지는 같은 어두운 갈색 바탕(왼쪽 아래의 따뜻한 번짐 포함). 사진은 이 위에 가장자리가 풀리며 놓인다.
-const BG_GAIN = { value: 1.3 };
-const bgMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({
-  uniforms: { gain: BG_GAIN },
-  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
-  fragmentShader: `
-    varying vec2 vUv; uniform float gain;
-    void main(){
-      // body.story-phase 의 #181411 이 ACES 톤매핑을 거친 뒤에도 그대로 나오도록 미리 역산한 선형값
-      gl_FragColor = vec4(vec3(.02356, .01948, .01662) * gain, 1.);
+      vec3 M = texture2D(tM, vUv).rgb;                       // R 가마 안, G 불길, B 불빛이 닿는 정도
+      vec3 c0 = texture2D(tP, vUv).rgb;
+      // 가마 안: 불길을 위로 흐르는 잡음으로 살짝 밀어 그려 일렁이게, 혀처럼 솟는 밝기 변화를 더한다(잡음은 가마 안에서만 계산)
+      vec3 inner = c0; float tongue = .5;
+      if (M.r > .002) {
+        vec2 q = vUv * vec2(30., 16.);
+        vec2 w = vec2(fbm(q + vec2(0., -uT * 2.1)), fbm(q * 1.3 + vec2(5.2, -uT * 2.6))) - .5;
+        inner = mix(c0, texture2D(tP, vUv + w * vec2(.005, .011) * M.r).rgb, smoothstep(.0, .35, M.g));
+        tongue = fbm(vec2(vUv.x * 46., vUv.y * 18. - uT * 3.4));
+      }
+      float body = mix(1., .45 + 1.25 * tongue, smoothstep(.05, .5, M.g));
+      vec3 tint = mix(vec3(1., .38, .2), vec3(1.), smoothstep(.2, .85, uHeat));   // 불이 약하면 검붉게, 세지면 사진 그대로의 불빛
+      float heatI = uHeat * uFlick;
+      vec3 grey = vec3(dot(c0, vec3(.2126, .7152, .0722))) * vec3(1., .9, .8);
+      vec3 unlit = mix(mix(grey, c0, .4), vec3(.06, .022, .015), smoothstep(.0, .3, M.g));   // 불이 꺼진 가마 안: 사진의 불길 자리는 둘레 벽과 같은 그을린 벽돌빛으로
+      // 불이 꺼진 뒤: 열린 입구로 든 빛이 잔 둘레의 선반을 부드럽게 비춘다
+      vec2 pd = (vUv - uCup.xy - uCup.zw * vec2(.5, -.05)) / vec2(.1, .016);
+      float pool = exp(-dot(pd, pd));
+      vec3 interior = unlit * (.035 * uAmb + uAfter * (.05 + .6 * pool)) + inner * tint * heatI * body * (1. + .45 * uHeat * uHeat);
+      // 바깥: 달빛 정도의 바탕에서, 불빛이 닿는 만큼 불의 세기·일렁임을 따라 사진 밝기로
+      float L = M.b;
+      vec3 cold = mix(grey, c0, .55) * mix(.42, .07, L) * uAmb;
+      vec3 lit = c0 * mix(1., uFlick, L);
+      vec3 outside = mix(cold, lit, clamp(uHeat * 1.2, 0., 1.)) + c0 * .2 * uAfter * L;
+      vec3 col = mix(outside, interior, M.r);
+      // 선반 위 소리잔: 초벌 → 유약 잔. 불빛을 받고, 뒤의 불길이 윤곽을 감싸며(역광), 가장 뜨거울 때는 잔 자체가 달아오른다
+      vec2 cu = (vUv - uCup.xy) / uCup.zw;
+      if (cu.x > 0. && cu.x < 1. && cu.y > 0. && cu.y < 1.) {
+        vec4 cs = mix(texture2D(tCB, cu), texture2D(tC, cu), uGlaze);
+        vec2 e = vec2(.03, .022);
+        float around = .25 * (texture2D(tCB, cu + vec2(e.x, 0.)).a + texture2D(tCB, cu - vec2(e.x, 0.)).a + texture2D(tCB, cu + vec2(0., e.y)).a + texture2D(tCB, cu - vec2(0., e.y)).a);
+        float rim = cs.a * clamp((1. - around) * 1.8, 0., 1.);
+        float lum = dot(cs.rgb, vec3(.2126, .7152, .0722));
+        vec3 light = uFire * heatI * 1.15 + vec3(1., .9, .78) * (.035 * uAmb + .62 * uAfter);
+        vec3 cup = cs.rgb * light
+                 + uFire * heatI * rim * (.15 + 1.1 * smoothstep(.0, .4, M.g) * body)   // 뒤에서 넘실대는 불길이 있는 자리만 윤곽이 달아오른다
+                 + uHot * pow(smoothstep(.5, 1., uHeat), 2.) * (.75 - .2 * uGlaze) * (.25 + .75 * lum) * (.8 + .2 * tongue);
+        col = mix(col, cup, cs.a);
+      }
+      gl_FragColor = vec4(col, 1.);
     }`,
   depthTest: false, depthWrite: false,
 }));
-bgMesh.renderOrder = -2; bgMesh.frustumCulled = false;
-scene.add(bgMesh);
 scene.add(photo);
 
-// ---------- burner flames, placed where the burners are in the photograph ----------
-const flameMat = new THREE.ShaderMaterial({
-  uniforms: { uTime: { value: 0 }, uHeat: { value: 0 }, uWarm: { value: 0 }, uSeed: { value: 0 }, uCol: { value: new THREE.Color() } },
-  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
-  fragmentShader: `
-    varying vec2 vUv; uniform float uTime, uHeat, uWarm, uSeed; uniform vec3 uCol;
-    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-    float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
-    float fbm(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 5; i++) { s += a * n(p); p *= 2.03; a *= .5; } return s; }
+// ---------- 장작 불티 ----------
+const SPARKS = 260;
+const seeds = new Float32Array(SPARKS * 4); for (let i = 0; i < seeds.length; i++) seeds[i] = Math.random();
+const sg = new THREE.BufferGeometry();
+sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SPARKS * 3), 3));
+sg.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 4));
+const SU = { uT: U.uT, uHeat: U.uHeat, uXf: { value: new THREE.Vector4(1, 1, 0, 0) }, uPx: { value: 1 }, tM: U.tM };
+const sparks = new THREE.Points(sg, new THREE.ShaderMaterial({
+  uniforms: SU,
+  vertexShader: `
+    attribute vec4 aSeed; uniform float uT, uHeat, uPx; uniform vec4 uXf;
+    varying float vA, vAge, vIn; varying vec2 vP;
     void main(){
-      vec2 p = vUv; float t = uTime;
-      float f = fbm(vec2(p.x * 4. + uSeed, p.y * 2.6 - t * 2.6));
-      float w = .5 - abs(p.x - .5 + (f - .5) * .35 * p.y);
-      float shape = smoothstep(.0, .22, w) * smoothstep(1., .15, p.y + (f - .5) * .6) * smoothstep(0., .06, p.y);
-      vec3 blue = vec3(.25, .45, 1.) * smoothstep(.25, .0, p.y) * smoothstep(.1, .3, w);
-      vec3 gas = vec3(.28, .5, 1.) * (shape * .9 + pow(shape, 3.) * 1.4);
-      vec3 c = (mix(gas, uCol * (shape * .5 + pow(shape, 3.) * .9), uWarm) + blue * .35) * uHeat;
-      gl_FragColor = vec4(c, 1.);
+      float kind = aSeed.w;                                   // < .62 가마 안, < .82 입구 밖으로 튐, 나머지 굴뚝
+      float life = kind < .62 ? mix(.9, 2.,  aSeed.x) : kind < .82 ? mix(.7, 1.4, aSeed.x) : mix(1.8, 3.6, aSeed.x);
+      float age = fract(uT / life + aSeed.y);
+      float cyc = floor(uT / life + aSeed.y);
+      float r = fract(sin((cyc + 1.) * 91.7 + aSeed.z * 47.3) * 43758.5);     // 한 번 날 때마다 새 자리
+      vec2 p;
+      if (kind < .62) {                                       // 장작 위에서 솟아 가마 천장에 닿기 전 사그라짐
+        p = vec2(.405 + .15 * r, .27 + .09 * fract(r * 7.3));
+        p += vec2(sin(age * 7. + r * 30.) * .006 + (aSeed.x - .5) * .025 * age, age * (.07 + .09 * aSeed.z));
+        vIn = 1.;
+      } else if (kind < .82) {                                // 입구 앞으로 튀어 포물선을 그리며 떨어짐
+        vec2 v0 = vec2((r - .5) * .16, .16 + .14 * aSeed.z);
+        p = vec2(.43 + .1 * r, .27) + v0 * age + vec2(0., -.22 * age * age);
+        vIn = 0.;
+      } else {                                                // 굴뚝 위로 바람을 타고 날림
+        p = vec2(.578 + .012 * (r - .5), .925) + vec2(.05 * age + sin(age * 5. + r * 20.) * .008, age * (.09 + .07 * aSeed.z));
+        vIn = 0.;
+      }
+      // 불의 세기만큼만 날린다(약할 땐 몇 개, 한창일 땐 모두)
+      float on = step(aSeed.x * .999, uHeat * (kind < .62 ? 1.15 : kind < .82 ? .7 : .9) - .05);
+      vA = on * smoothstep(0., .06, age) * (1. - smoothstep(.55, 1., age)) * (.6 + .4 * sin(uT * 31. + aSeed.y * 60.));
+      vAge = age; vP = p;
+      gl_Position = vec4((p - .5) * 2. * uXf.xy + uXf.zw, 0., 1.);
+      gl_PointSize = (1.4 + 3.2 * aSeed.z * aSeed.z * aSeed.z) * uPx * (1. - .45 * age);
     }`,
-  blending: THREE.AdditiveBlending, depthTest: false, depthWrite: false, transparent: true,
-});
-const BURNERS = [];
-[-1, 1].forEach(sg => [0, 1, 2].forEach(k => {
-  const b = SCREEN[`b${sg}${k}_base`], t = SCREEN[`b${sg}${k}_top`];
-  const mat = flameMat.clone(); mat.uniforms = THREE.UniformsUtils.clone(flameMat.uniforms);
-  const g = new THREE.PlaneGeometry(1, 1); g.translate(0, .5, 0);
-  const m = new THREE.Mesh(g, mat); scene.add(m);
-  BURNERS.push({ m, mat, b, t, order: [2, 5, 1, 4, 0, 3].indexOf(sg < 0 ? k : 3 + k), lit: false, flashT: -9, seed: Math.random() * 10 });
+  fragmentShader: `
+    uniform sampler2D tM; varying float vA, vAge, vIn; varying vec2 vP;
+    void main(){
+      vec2 d = gl_PointCoord - .5; float r = dot(d, d) * 4.;
+      float a = vA * exp(-r * 3.) * mix(1., texture2D(tM, vP).r, vIn);   // 가마 안 불티는 아치 밖으로 나가지 않는다
+      vec3 c = mix(vec3(1., .66, .3) * 2.4, vec3(1., .26, .05) * 1.2, smoothstep(.15, .85, vAge));
+      gl_FragColor = vec4(c * a, 1.);
+    }`,
+  blending: THREE.AdditiveBlending, transparent: true, depthTest: false, depthWrite: false,
 }));
+sparks.frustumCulled = false;
+scene.add(sparks);
 
 // ---------- post ----------
 const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(4, 4, { type: THREE.HalfFloatType }));
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(4, 4), .2, .5, .9); composer.addPass(bloom);
+const bloom = new UnrealBloomPass(new THREE.Vector2(4, 4), .25, .55, .82); composer.addPass(bloom);
 const grade = new ShaderPass({
-  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uHeat: { value: 0 }, uFlash: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) } },
-  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uHeat: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) } },
+  vertexShader: QUAD_VS,
   fragmentShader: `
-    varying vec2 vUv; uniform sampler2D tDiffuse; uniform float uTime, uHeat, uFlash; uniform vec2 uRes;
-    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-    float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
+    varying vec2 vUv; uniform sampler2D tDiffuse; uniform float uTime, uHeat; uniform vec2 uRes;
+    ${NOISE}
     void main(){
+      // 아지랑이: 뜨거울수록 화면이 아주 살짝 일렁인다
       vec2 q = vUv * vec2(uRes.x / uRes.y, 1.) * vec2(6., 3.5);
       float w = (n(q + vec2(0., -uTime * 1.6)) + .5 * n(q * 2.1 + vec2(3.1, -uTime * 2.7))) - .75;
-      vec2 uv = vUv + vec2(w, w * .5) * .004 * uHeat;
+      vec2 uv = vUv + vec2(w, w * .5) * .003 * uHeat;
       vec2 d = uv - .5; float r2 = dot(d, d);
-      vec3 c = vec3(texture2D(tDiffuse, uv + d * r2 * .005).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - d * r2 * .005).b);
-      c += vec3(.55, .7, 1.) * uFlash * .05 * (1. - r2 * 2.);
-      c *= 1. - r2 * 1.0;
-      c += (h(vUv * uRes + fract(uTime) * 91.7) - .5) * .012;
+      vec3 c = texture2D(tDiffuse, uv).rgb;
+      c *= 1. - r2 * .9;
+      c += (h(vUv * uRes + fract(uTime) * 91.7) - .5) * .01;
       gl_FragColor = vec4(c, 1.);
     }`,
 });
 composer.addPass(grade);
 composer.addPass(new OutputPass());
 
-// cover the viewport with the 16:9 photograph; on narrow screens keep the kiln in view
-let sx = 1, sy = 1, ox = 0, oy = 0, zt = 0;
+// ---------- 화면 배치: 사진이 화면을 덮고(cover), 좁은 화면은 가마 입구를 가운데로 ----------
+let zt = 0;
 function place() {
-  // 가마(사진에서 가로 .49)를 화면 중앙에 두고 작게: 데스크톱은 화면 높이의 약 .6배, 좁은 화면은 가로에 맞춘다
-  const a = innerWidth / innerHeight, wide = a >= IMG_ASPECT - 1e-3;
-  const bx = wide ? 1 : IMG_ASPECT / a, by = wide ? a / IMG_ASPECT : 1;
-  const Z = Math.min(.9, 1.7 / (.98 * bx));
-  const sx0 = bx * Z, sy0 = by * Z, kc = U.uKiln.value, ih = innerHeight, iw = innerWidth;
-  // 처음엔 가마를 크게 당겨서, 앞 장면에 떠 있는 잔이 거의 움직이지 않고 선반 위 그 자리에 놓이게 한다. 그다음 천천히 물러난다.
-  const narrowV = iw < 768, Pf = [iw * .5, ih * .5], hF = (narrowV ? .311 : .364) * ih;   // 히어로·시리즈 소리잔과 같은 화면 크기
-  const Kz = 1, ZK = 1;   // 가마는 원래 크기 그대로(확대하지 않음). 잔이 작아져 선반에 앉는다
-  const cupV = [.624, .415 - .0185 / sy0];
-  const ox0 = -(kc.x - .5) * 2 * sx0, oy0 = -(kc.y - .5) * 2 * sy0;
-  const Ncn = [(cupV[0] - .5) * 2 * sx0 + ox0, (cupV[1] - .5) * 2 * sy0 + oy0], Nf = [(Pf[0] / iw - .5) * 2, (.5 - Pf[1] / ih) * 2];
-  const w = Kz > 1 ? (ZK - 1) / (Kz - 1) : 0, Nc = [Ncn[0] + (Nf[0] - Ncn[0]) * w, Ncn[1] + (Nf[1] - Ncn[1]) * w];
-  // 당겨졌을 때 가마 속 잔의 폭을 히어로 잔과 맞춘다
-  sx = sx0 * ZK * (1 - .05 * w); sy = sy0 * ZK; ox = Nc[0] - (cupV[0] - .5) * 2 * sx; oy = Nc[1] - (cupV[1] - .5) * 2 * sy;
+  const a = innerWidth / innerHeight, iw = innerWidth, ih = innerHeight;
+  const Z = 1.03 + .05 * zt;   // 불이 한창일 때 아주 살짝 다가간다
+  let sx = a >= IMG_ASPECT ? 1 : IMG_ASPECT / a, sy = a >= IMG_ASPECT ? a / IMG_ASPECT : 1; sx *= Z; sy *= Z;
+  const ox = clamp(-(MOUTH[0] - .5) * 2 * sx, 1 - sx, sx - 1), oy = clamp(-(MOUTH[1] - .5) * 2 * sy * .35, 1 - sy, sy - 1);
   photo.scale.set(sx, sy, 1); photo.position.set(ox, oy, 0);
-  U.uSx.value = sx; U.uOx.value = ox; U.uZw.value = w; U.uMx.value.set(narrowV ? .8 : .36, narrowV ? 1.05 : .62);
-  const toNDC = (u, v) => [(u - .5) * 2 * sx + ox, (v - .5) * 2 * sy + oy];
-  { const kn = toNDC(kc.x, kc.y), st = document.querySelector('#fire .make-stage'); if (st) { st.style.setProperty('--kx', `${((kn[0] * .5 + .5) * iw).toFixed(1)}px`); st.style.setProperty('--ky', `${((.5 - kn[1] * .5) * ih).toFixed(1)}px`); } } // 가마 중심(화면 좌표): 등장 때 여기서부터 퍼지며 나타난다
-  window.__fireCup = { x: (Nc[0] * .5 + .5) * iw, y: (.5 - Nc[1] * .5) * ih, h: .105 * sy0 * ih };
-  BURNERS.forEach(B => { const [bx2, by2] = toNDC(B.b[0], B.b[1]), [tx, ty] = toNDC(B.t[0], B.t[1]); B.x = bx2; B.y = by2; B.h = ty - by2; B.w = .028 * sx; B.m.position.set(bx2, by2, 0); });
+  SU.uXf.value.set(sx, sy, ox, oy); SU.uPx.value = renderer.getPixelRatio() * Math.max(1, ih / 900);
+  const toScreen = (u, v) => [((u - .5) * 2 * sx + ox) * .5 * iw + iw / 2, ih / 2 - ((v - .5) * 2 * sy + oy) * .5 * ih];
+  { const [kx, ky] = toScreen(MOUTH[0], MOUTH[1]), st = document.querySelector('#fire .make-stage'); if (st) { st.style.setProperty('--kx', `${kx.toFixed(1)}px`); st.style.setProperty('--ky', `${ky.toFixed(1)}px`); } } // 등장 때 가마 입구에서부터 퍼지며 나타난다
+  // 선반 위 소리잔의 화면 자리·높이: 시리즈의 3D 잔이 여기서부터 커진다(hero-scene.js)
+  const [cx, cy] = toScreen(CUP[0] + CUP[2] / 2, CUP[1] + CUP[3] / 2);
+  window.__fireCup = { x: cx, y: cy, h: CUP[3] * 2 * sy * .5 * ih };
 }
 function resize() { const pr = sceneDpr(); renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false); composer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight); grade.uniforms.uRes.value.set(innerWidth * pr, innerHeight * pr); place(); }
 addEventListener('resize', resize); resize();
 
-// ---------- scroll → target temperature; the kiln answers with thermal inertia ----------
+// ---------- 스크롤 → 목표 온도; 가마는 열의 관성으로 따라간다 ----------
 const section = document.getElementById('fire');
 const beatsUpdate = createBeats(document.querySelector('#fire .make-stage'), 'fire');
 let target = 0, p = 0;
@@ -177,54 +214,25 @@ const glazeOf = q => sm(fit(q, .4, .6));
 const STILL = /[?&]still\b/.test(location.search);
 const clock = new THREE.Clock();
 let heat = 0, glaze = 0;
-const col = new THREE.Color(), col2 = new THREE.Color(), blueish = new THREE.Color(.5, .66, 1), fc = new THREE.Color();
 let live = false, running = false;
 function frame() {
   const dt = Math.min(.05, clock.getDelta()), t = clock.elapsedTime;
   p += (target - p) * (1 - Math.pow(.002, dt));
-  { // 장면이 완전히 드러난 뒤에만 가마가 물러난다
-    const wz = sm(fit(p, .1, .34)) * (1 - sm(fit(p, .8, .97))), fo = window.__fireO ?? 1, nz = fo > .97 || p > .5 ? wz : Math.min(zt, wz);
-    if (Math.abs(nz - zt) > 1e-4) { zt = nz; place(); }
-  }
+  { const nz = sm(fit(p, .1, .34)) * (1 - sm(fit(p, .8, .97))); if (Math.abs(nz - zt) > 1e-4) { zt = nz; place(); } }
   const hT = heatOf(p), tau = hT > heat ? 1.1 : 1.9;
   heat = reduced ? hT : heat + (hT - heat) * (1 - Math.exp(-dt / tau));
   const gT = glazeOf(p);
   glaze = reduced ? gT : (gT > glaze ? glaze + (gT - glaze) * (1 - Math.exp(-dt / 1.4)) : (gT < .02 && heat < .05 ? gT : glaze));
-  const K = 900 + 1150 * heat; blackbody(K, col); blackbody(Math.max(800, K - 300), col2);
-  const glow = Math.pow(heat, 2.2);
-  const flick = 1 + (Math.sin(t * 7.3) * .5 + Math.sin(t * 13.1 + 1.3) * .3 + Math.sin(t * 2.1) * .4) * (.05 + .1 * sm(fit(heat, .1, .6)) * (1 - .5 * heat));
-
-  // ignition: the burners catch one by one, each with a blue flash
-  let flash = 0, lit = 0; const warmth = sm(fit(heat, .12, .45));
-  BURNERS.forEach(B => {
-    const th = .015 + B.order * .02, ign = sm(fit(heat, th, th + .03));
-    if (!B.lit && ign > .5) { B.lit = true; B.flashT = t; } else if (B.lit && ign < .2) B.lit = false;
-    const fl = Math.max(0, 1 - (t - B.flashT) * 2.2), f2 = fl * fl; flash = Math.max(flash, f2);
-    const roar = 1 + (Math.sin(t * 9 + B.seed) * .5 + Math.sin(t * 17.3 + B.seed * 2) * .3 + Math.sin(t * 3.1 + B.seed) * .4) * (.12 + .18 * heat);
-    B.mat.uniforms.uTime.value = t; B.mat.uniforms.uSeed.value = B.seed; B.mat.uniforms.uWarm.value = warmth; B.mat.uniforms.uCol.value.copy(col);
-    B.mat.uniforms.uHeat.value = ign * (1 + f2 * 1.5) * (1 - .45 * sm(fit(heat, .75, 1)));
-    B.m.scale.set(B.w * (1 + .6 * heat), B.h * ((.45 + 1.5 * sm(fit(heat, .05, .8))) * roar + f2 * .9), 1);
-    lit += ign * roar + f2 * 3;
-  });
-  lit /= BURNERS.length;
-
-  // the light mix
+  // 장작불의 일렁임: 느린 너울 + 빠른 떨림, 불이 셀수록 크게
+  const flick = reduced ? 1 : 1 + (Math.sin(t * 7.3) * .5 + Math.sin(t * 13.1 + 1.3) * .3 + Math.sin(t * 2.1) * .4 + Math.sin(t * 23.7 + 4.1) * .15) * (.05 + .1 * sm(fit(heat, .05, .6)));
+  const K = 1000 + 1100 * heat;
+  blackbody(K, U.uFire.value); blackbody(Math.max(900, K - 250), U.uHot.value);
   const after = sm(fit(p, .78, .97));
-  const cool = (1 - sm(fit(heat, .05, .4))) * (1 - .9 * sm(fit(p, .05, .115)) * (1 - after));
-  U.kS.value = cool * (1 + .15 * after);
-  U.glaze.value = glaze;
-  fc.copy(blueish).lerp(col, warmth); const fI = lit * (.35 + 2.2 * glow) * flick;
-  U.cF.value.set(fc.r * fI, fc.g * fI, fc.b * fI);
-  const self = Math.pow(sm(fit(heat, .28, 1)), 1.5) * flick * .6;
-  U.cG.value.set(col2.r * self, col2.g * self, col2.b * self);
-  const wg = Math.pow(sm(fit(heat, .4, 1)), 1.8) * .55 * flick;
-  U.cW.value.set(col.r * wg, col.g * wg, col.b * wg);
-  renderer.toneMappingExposure = 1.0 - .5 * glow;
-  BG_GAIN.value = 1.3 / renderer.toneMappingExposure;
-  bloom.strength = .12 + .18 * glow; bloom.threshold = .92 - .04 * glow;
-  grade.uniforms.uTime.value = t; grade.uniforms.uHeat.value = reduced ? 0 : .6 * sm(fit(heat, .3, 1)); grade.uniforms.uFlash.value = reduced ? 0 : flash;
-  // a faint tremor as each burner catches (no zoom)
-  const sh = reduced ? 0 : flash * .004; camera.position.set(Math.sin(t * 61) * sh, Math.sin(t * 47) * sh, 0);
+  U.uT.value = reduced ? 0 : t; U.uHeat.value = heat; U.uFlick.value = flick; U.uGlaze.value = glaze; U.uAfter.value = after;
+  U.uAmb.value = 1 - .6 * sm(fit(heat, .05, .5));   // 불이 세지면 달빛 바탕은 불빛에 묻힌다
+  const glow = Math.pow(heat, 2);
+  bloom.strength = .18 + .42 * glow; bloom.threshold = .86 - .1 * glow;
+  grade.uniforms.uTime.value = t; grade.uniforms.uHeat.value = reduced ? 0 : sm(fit(heat, .3, 1));
   { const SW = window.__kjySway; if (SW && !reduced) { const tx = (SW.x * 9).toFixed(1), ty = (SW.y * 5).toFixed(1); const v = `translate3d(${tx}px,${ty}px,0) scale(1.02)`; if (canvas.style.transform !== v) canvas.style.transform = v; } } // 가마도 마우스를 따라 아주 살짝
 
   beatsUpdate(p);

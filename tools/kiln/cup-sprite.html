@@ -1,0 +1,26 @@
+<!doctype html><meta charset=utf-8><body style="margin:0;background:transparent">
+<canvas id=c width=360 height=480></canvas>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+const q=new URLSearchParams(location.search), bisque=q.has('bisque');
+const r=new THREE.WebGLRenderer({canvas:c,antialias:true,alpha:true,premultipliedAlpha:false,preserveDrawingBuffer:true});
+r.setPixelRatio(2);r.setSize(360,480,false);r.setClearColor(0,0);r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;r.toneMappingExposure=1.05;
+const s=new THREE.Scene();const pm=new THREE.PMREMGenerator(r);s.environment=pm.fromScene(new RoomEnvironment(),.04).texture;s.environmentIntensity=.55;
+const d=new THREE.DirectionalLight(0xffffff,2.2);d.position.set(-3,5,4);s.add(d);
+const d2=new THREE.DirectionalLight(0xffffff,.6);d2.position.set(3,2,3);s.add(d2);
+s.add(new THREE.HemisphereLight(0xffffff,0x554433,.5));
+const g=await new GLTFLoader().loadAsync('../../assets/models/sori-60th-doraji.glb');
+let mesh;g.scene.traverse(o=>{if(o.isMesh&&!mesh)mesh=o});
+if(bisque){mesh.material=new THREE.MeshStandardMaterial({color:new THREE.Color(.871,.846,.779).convertSRGBToLinear(),roughness:.85,metalness:0});}
+const grp=new THREE.Group();grp.add(g.scene);s.add(grp);grp.rotation.y=-.35;
+const box=new THREE.Box3().setFromObject(grp),ctr=box.getCenter(new THREE.Vector3()),sz=box.getSize(new THREE.Vector3());
+const cam=new THREE.PerspectiveCamera(24.7,360/480,.05,80);
+const pitch=THREE.MathUtils.degToRad(9),need=1.12*Math.max(sz.y,sz.x/(360/480)),dist=need/(2*Math.tan(THREE.MathUtils.degToRad(12.35)));
+cam.position.set(ctr.x,ctr.y+Math.sin(pitch)*dist,ctr.z+Math.cos(pitch)*dist);cam.lookAt(ctr);
+r.render(s,cam);
+// tight bbox of alpha
+const gl=r.getContext();window.__png=c.toDataURL('image/png');window.__done=1;
+</script>
