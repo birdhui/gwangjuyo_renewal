@@ -3,7 +3,7 @@ import * as THREE from 'three';
 /* 장면들이 나눠 쓰는 WebGL 하나.
    물레·가마·구슬 소리·아름다움·푸터 장면은 각자 렌더러(=WebGL 문맥)를 만들던 것을, 화면 밖 OffscreenCanvas 하나에 붙은
    렌더러 하나로 그린다. 각 장면의 캔버스는 원래 자리(같은 CSS·마스크·겹침 순서)에 그대로 두고, 그 장면이 그린 결과만
-   비트맵으로 넘겨받는다(transferToImageBitmap → bitmaprenderer, 복사 없이 넘김).
+   2D로 옮겨 받는다(GPU 안에서의 복사 한 번).
    장면마다 쓰던 렌더러 설정(크기·배율·톤 매핑·노출·색 공간·그림자·지우는 색·autoClear)은 그 장면 몫으로 따로 기억했다가
    그 장면이 그릴 때만 렌더러에 얹는다 → 장면 코드는 예전처럼 renderer.xxx를 그대로 쓴다.
    OffscreenCanvas WebGL을 못 쓰는 브라우저는 예전처럼 장면마다 자기 렌더러를 만든다. */
@@ -54,8 +54,9 @@ function present() {
   const v = active;
   if (!v || !v.drew) return;
   v.drew = false;
-  if (!v.ctx) v.ctx = v.display.getContext('bitmaprenderer');
-  v.ctx.transferFromImageBitmap(sharedRenderer().getContext().canvas.transferToImageBitmap());
+  if (!v.ctx) v.ctx = v.display.getContext('2d');
+  v.ctx.globalCompositeOperation = 'copy';   // 이전 그림 위에 겹치지 않고 그대로 바꿔 넣기(캔버스 크기가 바뀌면 설정이 초기화되므로 매번)
+  v.ctx.drawImage(sharedRenderer().getContext().canvas, 0, 0);
 }
 function drew(v) {
   if (sharedRenderer().getRenderTarget() !== null) return;   // 화면(기본 버퍼)에 그렸을 때만
