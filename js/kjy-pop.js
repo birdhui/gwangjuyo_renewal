@@ -11,9 +11,6 @@ st.textContent=
 +'@media(prefers-reduced-motion:reduce){.sori-loader-graphic .slg-all{visibility:visible}}'
 /* 리뷰 강조 단어 = 광주요 리뉴얼 포인트 컬러 */
 +'html body .review-card em{color:#8fa9c4!important}'
-/* '쓰임으로 이어지는 아름다움'은 구슬이 지나간 자리에서만 보인다(빛·윤곽 층 포함) */
-+'html body .beauty-title{-webkit-mask-image:linear-gradient(to right,transparent calc(var(--wipe,100%) - 2.5%),#000 calc(var(--wipe,100%) + 2.5%));mask-image:linear-gradient(to right,transparent calc(var(--wipe,100%) - 2.5%),#000 calc(var(--wipe,100%) + 2.5%))}'
-+'@media(prefers-reduced-motion:reduce){html body .beauty-title{-webkit-mask-image:none;mask-image:none}}'
 /* 리뷰 문장 글자 크기 줄임: 데스크톱 1440px 기준 28px → 20px, 모바일 390px 기준 16px → 15px */
 +'@media(min-width:768px){html body .review-card blockquote{font-size:clamp(16px,1.39vw,28px)!important}}'
 +'@media(max-width:767px){html body .review-card blockquote{font-size:clamp(14px,3.8vw,18px)!important}}'
