@@ -72,11 +72,8 @@
 
 /* 글자 넘김(flipper) 호버 — oryzo is-flipper */
 .gjf-flip{display:inline-flex;white-space:nowrap}
-.gjf-fc{position:relative;display:inline-block;overflow:clip;vertical-align:top;line-height:1.25}
-.gjf-fc>span{position:relative;display:inline-block;transition:transform .55s cubic-bezier(.65,0,.25,1);transition-delay:calc(var(--i)*18ms)}
-.gjf-fc>span::after{content:attr(data-c);position:absolute;left:0;top:100%}
-.gjf-sp{width:.28em}
-a:hover>.gjf-flip .gjf-fc>span,a:focus-visible>.gjf-flip .gjf-fc>span{transform:translateY(-100%)}
+/* 메뉴처럼: 같은 무리(SNS·약관)에서 한 링크에 마우스를 올리면 나머지는 흐려진다(style.css 메뉴와 같은 값) */
+@media(min-width:768px){.gjf-sns-link,.gjf-legal a{transition:opacity .32s ease,color .3s}.gjf-col--sns:has(a:hover) a:not(:hover),.gjf-legal:has(a:hover) a:not(:hover){opacity:.55}}
 
 @media (min-width:1441px){
   .gjf-col--note{font-size:calc(var(--u) * 10.5)}
@@ -100,7 +97,4 @@ a:hover>.gjf-flip .gjf-fc>span,a:focus-visible>.gjf-flip .gjf-fc>span{transform:
   .gjf-field input{font-size:14px}
   .gjf-sns-link{font-size:12px}
   .gjf-legal{margin-top:28px}
-}
-@media (prefers-reduced-motion:reduce){
-  .gjf-fc>span{transition:none}
 }

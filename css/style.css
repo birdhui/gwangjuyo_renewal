@@ -66,7 +66,7 @@ body.story-dark .scene-shadows g{animation-play-state:paused}
 /* 현재 메뉴 밑 점선 = oryzo #site-header-line(.o-dashline: 두께 1px, 2px 선·2px 빈칸, 글자 아래 .2em). 위치·너비는 script.js가 옮긴다 */
 .nav-line{position:absolute;left:0;top:0;width:0;height:1px;pointer-events:none;background:var(--dotted-line)}
 @media(max-width:767px){.nav-line{display:none}}
-.nav-char{display:inline-block;overflow:hidden;vertical-align:top;line-height:1.25}.nav-char-inner{display:block;position:relative;transition:transform .38s cubic-bezier(.22,1,.36,1);transition-delay:calc(var(--char-index)*25ms)}.nav-char-inner::after{content:attr(data-char);position:absolute;top:100%;left:0}.site-nav a:hover .nav-char-inner,.site-nav a:focus-visible .nav-char-inner{transform:translateY(-100%)}
+.nav-char{display:inline-block;overflow:hidden;vertical-align:top;line-height:1.25}.nav-char-inner{display:block;position:relative;transition:transform .38s cubic-bezier(.22,1,.36,1);transition-delay:calc(var(--char-index)*25ms)}.nav-char-inner::after{content:attr(data-char);position:absolute;top:100%;left:0}a:hover .nav-char-inner,a:focus-visible .nav-char-inner{transform:translateY(-100%)}
 .site-nav a:hover,.site-nav a:focus-visible{opacity:.78}.site-header .menu-toggle{display:none}
 .footer-bottom .brand .brand-en{display:none}
 

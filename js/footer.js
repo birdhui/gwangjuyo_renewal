@@ -488,14 +488,8 @@ function init(root) {
   start();
 
   /* ---------- 푸터 UI: 글자 넘김, 주소 복사, 소식 받기 ---------- */
-  root.querySelectorAll('.gjf-flip').forEach((el) => {
-    const label = el.textContent.trim();
-    const host = el.closest('a, button') || el;
-    if (!host.getAttribute('aria-label')) host.setAttribute('aria-label', label);
-    el.innerHTML = [...label].map((ch, i) => ch === ' '
-      ? '<span class="gjf-fc gjf-sp" aria-hidden="true">&nbsp;</span>'
-      : `<span class="gjf-fc" aria-hidden="true"><span data-c="${ch}" style="--i:${i}">${ch}</span></span>`).join('');
-  });
+  // 글자 넘김은 메뉴와 같은 것(script.js window.kjyRollText, style.css .nav-char)
+  root.querySelectorAll('.gjf-flip').forEach((el) => window.kjyRollText?.(el, el.closest('a, button') || el));
   const copy = root.querySelector('.gjf-copy');
   copy?.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(location.href.split('#')[0]); } catch (e) { /* 클립보드 거부 시 무시 */ }
