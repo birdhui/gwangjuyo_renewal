@@ -36,21 +36,15 @@ const css=`
 .s3d-scroll>span{position:relative;width:25px;height:25px;display:grid;place-items:center}
 .s3d-scroll>span::before{content:'';position:absolute;inset:0;border:2px dotted rgba(255,237,215,.62);border-radius:50%;animation:scroll-ring 10.5s linear infinite}
 .s3d-veil{position:absolute;inset:0;pointer-events:none;opacity:0;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 30%,rgba(0,0,0,.5) 42%,transparent 56%);mask-image:linear-gradient(to bottom,#000 0%,#000 30%,rgba(0,0,0,.5) 42%,transparent 56%)}
-.s3d-dots{display:flex;align-items:center;gap:12px}
-.s3d-dots b{display:block;width:60px;border-top:1.5px dotted rgba(239,233,223,.55)}
-.s3d-dots i{display:block;width:6px;height:6px;border-radius:50%;background:#efe9df;opacity:.8}
-.s3d-dots i.on{width:12px;height:12px;opacity:1;animation:s3dslide 2.4s ease-in-out infinite}
-.s3d-hand{width:34px;height:40px;animation:s3dhand 2.4s ease-in-out infinite}
-@keyframes s3dhand{0%,100%{transform:translateX(-12px)}50%{transform:translateX(12px)}}
-@keyframes s3dslide{0%,100%{transform:translateX(-4px)}50%{transform:translateX(4px)}}
 @media (max-width:767px){.s3d-title{font-size:clamp(30px,8.4vw,48px)}.s3d-eye,.s3d-sub{font-size:16px}.s3d-box{font-size:14px;width:calc(14px * 15.27);height:calc(14px * 3.1)}}
 .s3d-ch{display:inline-block;opacity:0;will-change:opacity,filter,transform;white-space:pre}
-.s3d-hint{position:absolute;left:0;right:0;bottom:calc(5svh + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:10px;color:#efe9df;font-size:clamp(14px,1.05vw,20px);letter-spacing:-.01em;opacity:0}
-.s3d-mouse{width:26px;height:42px;border:1.6px solid #efe9df;border-radius:13px;position:relative}
-.s3d-mouse i{position:absolute;left:50%;top:8px;width:2px;height:8px;margin-left:-1px;border-radius:1px;background:#efe9df;animation:s3dwheel 1.8s ease-in-out infinite}
-@keyframes s3dwheel{0%,100%{transform:translateX(-6px)}50%{transform:translateX(6px)}}
-.s3d-touch{display:none}
-@media (hover:none),(pointer:coarse){.s3d-desk{display:none}.s3d-touch{display:inline}}
+/* 구슬 안내(oryzo grip-instruction과 같은 구성): 양끝이 흐려지는 넓은 U자 점선 + 그 위를 오가는 구슬 + 아래에서 같이 움직이는 손 */
+.s3d-hint{position:absolute;left:50%;bottom:calc(12svh + env(safe-area-inset-bottom,0px));width:clamp(220px,20vw,360px);transform:translateX(-50%);color:#efe9df;font-size:clamp(14px,1.05vw,20px);opacity:0;pointer-events:none}
+.s3d-wheel{display:block;width:100%;height:auto;overflow:visible;-webkit-mask-image:linear-gradient(90deg,transparent,#000 50%,transparent);mask-image:linear-gradient(90deg,transparent,#000 50%,transparent)}
+.s3d-wheel path{fill:none;stroke:currentColor;stroke-width:.25;stroke-dasharray:1 1;opacity:.6;animation:s3dDash 1s linear infinite}
+.s3d-wheel circle{fill:currentColor}
+.s3d-hand{display:block;width:2em;height:2.35em;margin:1.9em auto 0;opacity:.5}
+@keyframes s3dDash{from{stroke-dashoffset:2}to{stroke-dashoffset:0}}
 .s3d-sound{position:absolute;right:max(20px,4vw);bottom:calc(7svh + env(safe-area-inset-bottom,0px));width:44px;height:44px;border:0;background:none;color:#efe9df;padding:8px;cursor:pointer;opacity:0;pointer-events:none}
 .s3d-sound svg{width:100%;height:100%;display:block}
 .s3d-sound .s3d-w{display:none}.s3d-sound.is-on .s3d-w{display:block}.s3d-sound.is-on .s3d-x{display:none}
@@ -105,7 +99,7 @@ root.innerHTML=`<div class="s3d-bg"><div class="s3d-photo"></div><div class="s3d
 <div class="s3d-box">소리잔</div>
 <div class="s3d-scroll" aria-hidden="true"><span><i class="kjy-chev"></i><i class="kjy-chev kjy-g1"></i><i class="kjy-chev kjy-g2"></i></span>스크롤하여 더 보기</div>
 <div class="s3d-copy2"><p class="s3d-eye s3d-e2">손끝에서 시작되는 울림</p><h2 class="s3d-title s3d-t2">소리잔의 맑은 소리</h2><p class="s3d-sub s3d-s2">잔의 굽 안에 머문 작은 울림을<br>구슬의 움직임으로 천천히 느껴보세요.</p></div>
-<div class="s3d-hint" aria-hidden="true"><span class="s3d-dots"><b></b><i></i><i class="on"></i><i></i><b></b></span><svg class="s3d-hand" viewBox="0 0 34 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V5.5a2.5 2.5 0 0 1 5 0V18m0-4.5a2.5 2.5 0 0 1 5 0V19m0-3.5a2.5 2.5 0 0 1 5 0V20m0-2a2.5 2.5 0 0 1 5 0v8c0 6.5-4.5 11-10.5 11h-2c-4 0-6.6-2-8.6-5.4L4.2 26a2.4 2.4 0 0 1 3.9-2.7L12 27"/></svg><span class="s3d-desk">구슬을 좌우로 움직여 보세요.</span><span class="s3d-touch">손가락으로 구슬을 좌우로 움직여 보세요.</span></div>
+<div class="s3d-hint" aria-hidden="true"><svg class="s3d-wheel" viewBox="0 0 100 15"><path d="M50 12.1C82 12.1 100 3.6 100 2.1"/><path d="M50 12.1C18 12.1 0 3.6 0 2.1"/><circle cx="50" cy="12.1" r=".8"/><circle class="s3d-wheel-dot" cx="50" cy="12.1" r="1.8"/></svg><svg class="s3d-hand" viewBox="0 0 34 40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V5.5a2.5 2.5 0 0 1 5 0V18m0-4.5a2.5 2.5 0 0 1 5 0V19m0-3.5a2.5 2.5 0 0 1 5 0V20m0-2a2.5 2.5 0 0 1 5 0v8c0 6.5-4.5 11-10.5 11h-2c-4 0-6.6-2-8.6-5.4L4.2 26a2.4 2.4 0 0 1 3.9-2.7L12 27"/></svg></div>
 <button class="s3d-sound" type="button" aria-pressed="false" aria-label="소리 켜기"><svg viewBox="0 0 28 24" aria-hidden="true"><path d="M3 9h4l6-5v16l-6-5H3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path class="s3d-x" d="M18 9l6 6M24 9l-6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path class="s3d-w" d="M17.5 8.5a5 5 0 0 1 0 7M20.5 5.5a9 9 0 0 1 0 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
 <div class="s3d-black"></div>`;
 document.body.appendChild(root);
@@ -116,7 +110,7 @@ const magTitleChars=[...magT.querySelectorAll(".s3d-mt span")];
 const magItems=[".s3d-mi",".s3d-mb",".s3d-mm1",".s3d-mm2",".s3d-mmd span:nth-child(1)",".s3d-mmd span:nth-child(2)",".s3d-mn",".s3d-mct",".s3d-mcd span:nth-child(1)",".s3d-mcd span:nth-child(2)"].map(q=>mag.querySelector(q));
 const magRoll=mag.querySelector(".s3d-mbn i"),magBar=mag.querySelector(".s3d-mbar");
 const $=s=>root.querySelector(s);
-const photo=$(".s3d-photo"),table=$(".s3d-table"),shade=$(".s3d-shade"),canvas=$(".s3d-gl"),copy=$(".s3d-copy"),copy2=$(".s3d-copy2"),hint=$(".s3d-hint"),soundBtn=$(".s3d-sound"),black=$(".s3d-black");
+const photo=$(".s3d-photo"),table=$(".s3d-table"),shade=$(".s3d-shade"),canvas=$(".s3d-gl"),copy=$(".s3d-copy"),copy2=$(".s3d-copy2"),hint=$(".s3d-hint"),hintDot=$(".s3d-wheel-dot"),hintHand=$(".s3d-hand"),soundBtn=$(".s3d-sound"),black=$(".s3d-black");
 // 글자 단위로 나누기(흐림 → 또렷 등장)
 const split=el=>{const t=el.textContent;el.setAttribute("aria-label",t);el.textContent="";return[...t].map(c=>{const s=document.createElement("span");s.className="s3d-ch";s.textContent=c;s.setAttribute("aria-hidden","true");el.appendChild(s);return s})};
 const box=$(".s3d-box"),scrollCue=$(".s3d-scroll"),veil=$(".s3d-veil");
@@ -251,14 +245,14 @@ function placeCamera(A,dx,zoom,E){
   // A: 0 = 떨어져서 보는 자리, 1 = 손잡이 앞까지 다가감
   // E: 0 = 사진 속 잔과 같은 자리·크기, 1 = 조금 더 위·멀리서 탁자 위 잔을 내려다보는 시선(ORYZO 첫 화면처럼), 잔은 화면 가운데
   const cr=coverRect(),wantW=CUP_W*cr.bw,tan=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-  const dP=1.886*H/(2*tan*wantW),dE=dP*lerp(1,1.45,io(E)),d1=3.15;
+  const dP=1.886*H/(2*tan*wantW),dE=dP*lerp(1,1.45,io(E)),d1=3.7;
   const d=dE*Math.pow(d1/dE,io(A)),pitch=THREE.MathUtils.degToRad(lerp(lerp(8.5,27,io(E)),1.5,io(A)));
   tgt.copy(T0).lerp(T1,io(A));
   camera.position.set(0,tgt.y+Math.sin(pitch)*d,Math.cos(pitch)*d);camera.lookAt(tgt);camera.zoom=zoom;camera.clearViewOffset();camera.updateProjectionMatrix();camera.updateMatrixWorld();
   v3.set(0,.03,0).applyMatrix4(cup.matrixWorld).project(camera);
   const sx=(v3.x+1)/2*W,sy=(1-v3.y)/2*H;
   const x0=W/2,/* 화보 표지(갤러리 마지막 칸)에서도 잔이 칸의 가로 가운데에 오도록 — 사진은 잔 자리에 맞춰 함께 옮긴다 */y0=lerp(cr.by+BASE_V*cr.bh,H*(W<768?.8:.84),io(E));
-  const wantX=lerp(x0,W/2,io(A))+dx,wantY=lerp(y0,H*.9,io(A));
+  const wantX=lerp(x0,W/2,io(A))+dx,wantY=lerp(y0,H*.7,io(A));
   camera.setViewOffset(W,H,sx-wantX,sy-wantY,W,H);camera.updateProjectionMatrix();
   return{dE,d,cr,base:[wantX,wantY]};
 }
@@ -295,7 +289,7 @@ function frame(now){
   root.classList.toggle("is-live",on);
   /* 오른쪽 레일(스크롤바): 마지막 칸이 3D 공간으로 화면 전체가 될 때 함께 서서히 사라지고, 암전이 끝나 다음 섹션으로 넘어갈 때 다시 나타난다 */
   railVis(on?1-io(fit(we,2.35,3.05))*(1-sm(fit(we,10.85,11.4))):1);
-  if(!on){if(playing){playing=false;syncSound()}return}
+  if(!on){if(playing){playing=false;syncSound()}setHintVar(0);return}
   size();
   /* 1) 갤러리 칸 → 화면 전체 */
   const mobile=W<768,imgH=mobile?Math.min(H*.8,W*1.1):H*.8,imgW=imgH*.7727;
@@ -369,9 +363,19 @@ function frame(now){
   reveal(e2,fit(we,7.4,8.0),fit(we,9.5,10.0),.5);
   reveal(t2,fit(we,7.5,8.2),fit(we,9.5,10.1));
   reveal(s2,fit(we,7.7,8.4),fit(we,9.55,10.1),.4);
-  const h=sm(fit(we,7.9,8.4))*(1-sm(fit(we,9.4,9.9)));hint.style.opacity=h.toFixed(3);soundBtn.style.opacity=h.toFixed(3);
+  const h=sm(fit(we,7.9,8.4))*(1-sm(fit(we,9.4,9.9)));hint.style.opacity=h.toFixed(3);soundBtn.style.opacity=h.toFixed(3);if(h>0)swayHint(now);setHintVar(h);
   black.style.opacity=B.toFixed(3);
   syncSound();
+}
+let hintW=0,hintVar=-1;
+// '스크롤하여 내려가기'(script.js)는 구슬 안내가 나타나는 만큼 사라진다
+function setHintVar(h){const v=Math.round(h*1000)/1000;if(v===hintVar)return;hintVar=v;document.documentElement.style.setProperty("--s3d-hint",String(v))}
+addEventListener("resize",()=>{hintW=0});
+function swayHint(now){
+  if(!hintW)hintW=hint.offsetWidth;
+  const a=now/1000*4,lift=(1-Math.cos(Math.abs(Math.cos(a)*.2)))*hintW*-.2;
+  hintHand.style.transform=`translate3d(${(Math.cos(a)*hintW*.1).toFixed(2)}px,${lift.toFixed(2)}px,0) rotate(${(Math.cos(a)*4).toFixed(2)}deg)`;
+  hintDot.setAttribute("transform",`translate(${(Math.cos(a+.1)*10).toFixed(3)} ${(lift*100/hintW).toFixed(3)})`);
 }
 let rollV=0;
 function stepMarble(dt){
