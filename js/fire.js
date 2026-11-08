@@ -164,18 +164,15 @@ const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(4, 4, 
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(4, 4), .25, .55, .82); composer.addPass(bloom);
 const grade = new ShaderPass({
-  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uHeat: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) } },
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) } },
   vertexShader: QUAD_VS,
   fragmentShader: `
-    varying vec2 vUv; uniform sampler2D tDiffuse; uniform float uTime, uHeat; uniform vec2 uRes;
+    varying vec2 vUv; uniform sampler2D tDiffuse; uniform float uTime; uniform vec2 uRes;
     ${NOISE}
     void main(){
-      // 아지랑이: 뜨거울수록 화면이 아주 살짝 일렁인다
-      vec2 q = vUv * vec2(uRes.x / uRes.y, 1.) * vec2(6., 3.5);
-      float w = (n(q + vec2(0., -uTime * 1.6)) + .5 * n(q * 2.1 + vec2(3.1, -uTime * 2.7))) - .75;
-      vec2 uv = vUv + vec2(w, w * .5) * .003 * uHeat;
-      vec2 d = uv - .5; float r2 = dot(d, d);
-      vec3 c = texture2D(tDiffuse, uv).rgb;
+      // 가장자리를 살짝 어둡게 하고 필름 결을 얹는다(화면 자체는 일렁이지 않는다)
+      vec2 d = vUv - .5; float r2 = dot(d, d);
+      vec3 c = texture2D(tDiffuse, vUv).rgb;
       c *= 1. - r2 * .9;
       c += (h(vUv * uRes + fract(uTime) * 91.7) - .5) * .01;
       gl_FragColor = vec4(c, 1.);
@@ -185,10 +182,9 @@ composer.addPass(grade);
 composer.addPass(new OutputPass());
 
 // ---------- 화면 배치: 사진이 화면을 덮고(cover), 좁은 화면은 가마 입구를 가운데로 ----------
-let zt = 0;
 function place() {
   const a = innerWidth / innerHeight, iw = innerWidth, ih = innerHeight;
-  const Z = 1.03 + .05 * zt;   // 불이 한창일 때 아주 살짝 다가간다
+  const Z = 1.03;   // 가장자리가 비지 않게 아주 살짝 크게(불이 붙어도 화면은 움직이지 않는다)
   let sx = a >= IMG_ASPECT ? 1 : IMG_ASPECT / a, sy = a >= IMG_ASPECT ? a / IMG_ASPECT : 1; sx *= Z; sy *= Z;
   const ox = clamp(-(MOUTH[0] - .5) * 2 * sx, 1 - sx, sx - 1), oy = clamp(-(MOUTH[1] - .5) * 2 * sy * .35, 1 - sy, sy - 1);
   photo.scale.set(sx, sy, 1); photo.position.set(ox, oy, 0);
@@ -218,7 +214,6 @@ let live = false, running = false;
 function frame() {
   const dt = Math.min(.05, clock.getDelta()), t = clock.elapsedTime;
   p += (target - p) * (1 - Math.pow(.002, dt));
-  { const nz = sm(fit(p, .1, .34)) * (1 - sm(fit(p, .8, .97))); if (Math.abs(nz - zt) > 1e-4) { zt = nz; place(); } }
   const hT = heatOf(p), tau = hT > heat ? 1.1 : 1.9;
   heat = reduced ? hT : heat + (hT - heat) * (1 - Math.exp(-dt / tau));
   const gT = glazeOf(p);
@@ -232,7 +227,7 @@ function frame() {
   U.uAmb.value = 1 - .6 * sm(fit(heat, .05, .5));   // 불이 세지면 달빛 바탕은 불빛에 묻힌다
   const glow = Math.pow(heat, 2);
   bloom.strength = .18 + .42 * glow; bloom.threshold = .86 - .1 * glow;
-  grade.uniforms.uTime.value = t; grade.uniforms.uHeat.value = reduced ? 0 : sm(fit(heat, .3, 1));
+  grade.uniforms.uTime.value = t;
   { const SW = window.__kjySway; if (SW && !reduced) { const tx = (SW.x * 9).toFixed(1), ty = (SW.y * 5).toFixed(1); const v = `translate3d(${tx}px,${ty}px,0) scale(1.02)`; if (canvas.style.transform !== v) canvas.style.transform = v; } } // 가마도 마우스를 따라 아주 살짝
 
   beatsUpdate(p);

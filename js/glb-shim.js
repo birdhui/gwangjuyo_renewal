@@ -28,35 +28,17 @@ window.__kjyNet=(function(){
 (function(){var st=document.createElement('style');st.textContent='.wc-floor{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse 44% 15% at 50% 79%,#3a312b 0%,transparent 100%)}.wc{position:absolute;inset:0;z-index:3;display:flex;align-items:center;pointer-events:none;visibility:hidden;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}.wc-a{justify-content:flex-end;padding-right:max(16px,4.2vw,env(safe-area-inset-right,0px))}.wc-b{justify-content:flex-start;padding-left:max(16px,5vw,env(safe-area-inset-left,0px))}.wc-box{display:flex;flex-direction:column;align-items:flex-start;max-width:clamp(320px,30vw,1180px);color:#fff;mix-blend-mode:difference}.wc-h{margin:0 0 clamp(14px,1.67vw,64px);font-weight:900;font-size:64px;line-height:.98;letter-spacing:-.05em;text-wrap:balance}.wc-h .wc-anim{display:flex;align-items:baseline;white-space:nowrap}.wc-h .wc-anim+.wc-anim{margin-top:.06em}.wc-sub{margin:0 0 clamp(12px,1.25vw,48px);font-weight:400;font-size:clamp(24px,1.458333333vw,56px);letter-spacing:-.025em;line-height:1.4}.wc-sub .wc-line{display:block;white-space:nowrap}@media(max-width:1599px){.wc-h{font-size:48px}.wc-sub{font-size:24px}}.wc-rule{width:clamp(80px,11.7vw,448px);height:clamp(2px,.105vw,4px);background:#fff;opacity:.8;margin:0 0 clamp(14px,1.67vw,64px)}.wc-p{margin:0;font-weight:300;font-size:clamp(14px,1.04vw,40px);line-height:1.68;letter-spacing:-.012em;opacity:.9;word-break:keep-all}.wc-anim{will-change:transform,opacity,filter;transform-origin:0 50%}@media(max-width:767px){.wc-h{font-size:32px}.wc-sub{font-size:16px}.wc{align-items:flex-end;padding-bottom:calc(9svh + env(safe-area-inset-bottom,0px))}.wc-a,.wc-b{justify-content:center}.wc-box{max-width:100%;align-items:center;text-align:center}.wc-h .wc-anim{justify-content:center}}@media(prefers-reduced-motion:no-preference){html #clay-gl{pointer-events:none}html .make-clay .make-stage{background:#141110}html .make-fire{height:140svh}html .make-fire .make-stage{display:none}}';(document.head||document.documentElement).appendChild(st)})();
 (function(){var r=document.documentElement,k=function(){r.style.setProperty('--k',Math.min(2.6667,Math.max(1,innerWidth/1440)).toFixed(4))};k();addEventListener('resize',k,{passive:true})})();
 (function(){function go(){if(document.readyState!=='interactive'&&document.readyState!=='complete')return;document.removeEventListener('readystatechange',go);var m=document.getElementById('marble'),s=document.getElementById('scenery');if(m&&s&&s.parentNode)s.parentNode.insertBefore(m,s.nextSibling);if(m){var st=m.querySelector('.mb-stage');if(st){var keep=function(){var r=m.getBoundingClientRect(),L=innerHeight*.9,q=(-r.top+L)/(r.height-innerHeight+L);if(r.top>=innerHeight||r.bottom<=0){if(st.style.opacity!=='0')st.style.opacity='0';if(st.classList.contains('is-on'))st.classList.remove('is-on')}else if(q>.8){if(st.style.opacity!=='1')st.style.opacity='1';if(!st.classList.contains('is-on'))st.classList.add('is-on')}};new MutationObserver(keep).observe(st,{attributes:true,attributeFilter:['style','class']});addEventListener('scroll',keep,{passive:true})}}var fc=document.querySelector('.hero-focus-copy');if(fc){fc.setAttribute('aria-label','하나의 곡선에 쌓여온 시간');var L=['하나의 곡선에,','쌓여온 시간.'],R=['보기 좋은 형태를 넘어,','손에 닿는 감각과 쓰임까지.','한 잔의 균형을 찾아온 시간.'];var ls=fc.querySelectorAll('.hero-focus-left .focus-line>span'),rs=fc.querySelectorAll(':scope>p>.focus-line');for(var i=0;i<ls.length&&i<2;i++)ls[i].textContent=L[i];for(var i=0;i<rs.length;i++){if(i<3)rs[i].firstElementChild.textContent=R[i];else rs[i].parentNode.removeChild(rs[i])}}if(!matchMedia('(prefers-reduced-motion: reduce)').matches){var ms=document.querySelector('#clay .make-stage'),cv=document.getElementById('clay-gl');if(ms&&cv){ms.insertAdjacentHTML('afterbegin','<div class="wc-floor" aria-hidden="true"></div>');cv.insertAdjacentHTML('afterend','<div class="wc wc-a"><div class="wc-box"><h2 class="wc-h"><span class="wc-anim">오래 남을 것의 시작.</span></h2><p class="wc-sub wc-anim">매일의 쓰임을 먼저 생각하는<br>광주요의 방식.</p></div></div><div class="wc wc-b"><div class="wc-box"><h2 class="wc-h"><span class="wc-anim">좋은 것은,</span><span class="wc-anim">작은 차이에서.</span></h2><p class="wc-sub wc-anim">눈에 띄지 않는 부분까지<br>세심하게 다듬습니다.</p></div></div>')}var d=function(){var e=document.createElement('script');e.type='module';e.src='js/director.js?v=20261109-r80';e.onload=function(){var h=document.createElement('script');h.type='module';h.src='js/herobreak.js?v=20261109-r80';document.head.appendChild(h)};document.head.appendChild(e)};var d0=d;d=function(){window.__kjyHeroReady.then(function(){setTimeout(d0,150)})};if(window.gsap)d();else{var g=document.createElement('script');g.src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js';g.onload=d;g.onerror=d;document.head.appendChild(g)}}}document.addEventListener('readystatechange',go);go()})();
-(function(){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var R=document.documentElement,busy=false;function upd(){if(busy)return;var s=document.getElementById('sori-series'),h=document.getElementById('hero');if(!s||!h)return;busy=true;var ih=innerHeight,U=(scrollY-s.offsetTop)/ih,t=Math.max(0,Math.min(1,(U-.05)/.95));window.__kjyKilnU=U;t=t*t*(3-2*t);/* 가마 → 시리즈(U = 시리즈 위 경계를 지난 화면 수): 가마는 0.05→1화면에 서서히 사라지고, 같은 동안 잔이 커지며(0.15→1.8, hero-scene.js) 굽부터 유약이 입혀진다(0.35→2.15) */var k=(1-t).toFixed(4);if(R.style.getPropertyValue('--fire-k')!==k)R.style.setProperty('--fire-k',k);var fo=parseFloat(R.style.getPropertyValue('--fire-o'))||0,co=parseFloat(R.style.getPropertyValue('--clay-o'))||0,so=1-Math.min(1,co+fo*(1-t));var cl=document.getElementById('clay');if((+window.__clayGone||0)>0&&cl&&scrollY>=cl.offsetTop)so=Math.min(so,t);so=so.toFixed(4);/* 물레가 암전되는 동안·가마가 나오기 전엔 히어로 잔을 다시 비추지 않는다(시리즈에 다가갈 때만) */if(h.style.getPropertyValue('--story-stage-opacity')!==so)h.style.setProperty('--story-stage-opacity',so);busy=false}function go(){var h=document.getElementById('hero');if(!h)return false;var mo=new MutationObserver(upd);mo.observe(R,{attributes:true,attributeFilter:['style']});mo.observe(h,{attributes:true,attributeFilter:['style']});addEventListener('scroll',upd,{passive:true});addEventListener('resize',upd);upd();return true}if(!go())document.addEventListener('DOMContentLoaded',go)})();
+(function(){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var R=document.documentElement,busy=false;function upd(){if(busy)return;var s=document.getElementById('sori-series'),h=document.getElementById('hero');if(!s||!h)return;busy=true;var ih=innerHeight,U=(scrollY-s.offsetTop)/ih,t=Math.max(0,Math.min(1,(U-.05)/.55));window.__kjyKilnU=U;t=t*t*(3-2*t);/* 가마 → 시리즈(U = 시리즈 위 경계를 지난 화면 수): 가마가 0.05→0.6화면에 서서히 사라지는 동안 가마 속 잔은 그 자리에 남고(같은 자리의 3D 잔으로 넘어감), 그 뒤 잔이 떠올라 되감기처럼 돌며 커지고(0.5→1.9, hero-scene.js) 굽부터 유약이 입혀진다(0.7→2.3) */var k=(1-t).toFixed(4);if(R.style.getPropertyValue('--fire-k')!==k)R.style.setProperty('--fire-k',k);var fo=parseFloat(R.style.getPropertyValue('--fire-o'))||0,co=parseFloat(R.style.getPropertyValue('--clay-o'))||0,so=1-Math.min(1,co+fo*(1-t));var cl=document.getElementById('clay');if((+window.__clayGone||0)>0&&cl&&scrollY>=cl.offsetTop)so=Math.min(so,t);so=so.toFixed(4);/* 물레가 암전되는 동안·가마가 나오기 전엔 히어로 잔을 다시 비추지 않는다(시리즈에 다가갈 때만) */if(h.style.getPropertyValue('--story-stage-opacity')!==so)h.style.setProperty('--story-stage-opacity',so);busy=false}function go(){var h=document.getElementById('hero');if(!h)return false;var mo=new MutationObserver(upd);mo.observe(R,{attributes:true,attributeFilter:['style']});mo.observe(h,{attributes:true,attributeFilter:['style']});addEventListener('scroll',upd,{passive:true});addEventListener('resize',upd);upd();return true}if(!go())document.addEventListener('DOMContentLoaded',go)})();
 (function(){var st=document.createElement('style');st.textContent='::selection{background:#8FA9C4;text-shadow:none}::-moz-selection{background:#8FA9C4;text-shadow:none}';(document.head||document.documentElement).appendChild(st)})();
 (function(){var st=document.createElement('style');st.textContent='html{scrollbar-width:none;-ms-overflow-style:none}html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}';(document.head||document.documentElement).appendChild(st)})();
 
-/* ===== 시리즈 배경: 기존 무지개 테두리 발광 제거 + 비정형 블롭 =====
-   블롭은 가는 테두리 선과 짧은 번짐만(테두리 굵기·안팎 번짐·바깥 후광을 줄여 흐릿한 느낌을 걷어냄) */
+/* ===== 시리즈 배경: oryzo 'Powered by AI'의 화면 테두리 빛(hero-scene.js 마지막 패스)을 그대로 쓰고,
+   빛의 색만 시리즈마다 바뀌는 [웜 · 중앙 · 쿨] 세 빛깔로 바꾼다(window.__kjyGlowPal() → [웜, 중앙, 쿨], sRGB 0~1).
+   빛깔은 잔의 텍스처가 바뀌는 지점마다 약 1.25초 동안 부드럽게 넘어간다. 등장·퇴장·회전은 테두리 빛 쪽 모션 그대로. */
 (function(){
-  // 1) 3D 장면 마지막 패스의 가장자리 발광·물결 왜곡 제거(셰이더 문자열 치환) — 소리잔·손은 왜곡하지 않음
-  try{
-    const fix=s=>{
-      if(typeof s!=="string"||s.indexOf("u_pulseCenter")<0||s.indexOf("glowColor")<0)return s;
-      return s
-        .replace("color += u_amount * glowColor * glow;","")
-        .replace("color += wave * (d * 0.25 + d2 * 0.25 + glowColor * 0.05);","")
-        .replace("float glowLuma = dot(glowColor, vec3(0.2126, 0.7152, 0.0722)) * glow * u_amount;","float glowLuma = 0.0;")
-        .replace("base.a + glowLuma + wave * (d + d2 * 0.5 + 0.05)","base.a")
-        .replace("v_uv + waveDir * smoothstep(0.0, 0.4, wd) * wave * -0.005","v_uv");
-    };
-    for(const C of [window.WebGLRenderingContext,window.WebGL2RenderingContext]){
-      if(!C)continue;const o=C.prototype.shaderSource;
-      C.prototype.shaderSource=function(sh,src){return o.call(this,sh,fix(src))};
-    }
-  }catch(e){}
-  // 2) 배경은 기존 블랙 브라운 단색, 블롭은 3D canvas 뒤 별도 레이어
   const st=document.createElement("style");
-  st.textContent=".hero-darkness{background:#171411!important}.hero-blob{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;display:block;visibility:hidden}";
+  st.textContent=".hero-darkness{background:#171411!important}";   // 시리즈 배경은 블랙 브라운 단색
   document.head.appendChild(st);
-  // 3) 블롭
-  const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
   const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
   // 시리즈별 [웜 · 중앙 · 쿨] — 구조는 같고 분위기만 달라짐
   const PAL=[
@@ -64,149 +46,18 @@ window.__kjyNet=(function(){
     [hex("#C99068"),hex("#86818A"),hex("#829BB2")],   // 킬른 앰버 · 청화 블루
     [hex("#D6AE7C"),hex("#878A80"),hex("#9BAE9F")]    // 청자빛 세이지
   ];
-  const STARTS=[4.8,7.4,10,12.6,15.2,17.8];   // 소리잔 전환 시작(시리즈 진행 ×21)
-  const MIDS=[5.3,7.9,10.5,13.1,15.7,18.3];   // 텍스처가 바뀌는 지점
+  const MIDS=[5.3,7.9,10.5,13.1,15.7,18.3];   // 텍스처가 바뀌는 지점(시리즈 진행 ×21)
   const TWEEN=1250;
-  const VS="attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
-  const FS=`precision highp float;
-uniform vec2 uRes,uCtr,uGeo;uniform float uT,uPx,uOp,uPulse,uSweep;uniform vec3 uW,uM,uC;
-float hh(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
-float wrap(float x){return atan(sin(x),cos(x));}
-float lobe(float a,float c,float k){return pow(.5+.5*cos(a-c),k);}
-float glob(float a,float c,float w){float d=wrap(a-c)/w;return exp(-d*d);}
-vec2 toUV(vec2 P){
-  vec2 v=(P-uCtr)/uGeo.x;v.x/=uGeo.y;
-  return v-vec2(.010*sin(uT*.21),.008*cos(uT*.17));
-}
-float R(float a){
-  float t=uT;
-  float b=a+.05*sin(t*.09);
-  float w=.2778+.0052*cos(b)-.0094*sin(b)-.0013*cos(2.*b)-.0209*sin(2.*b)-.0054*cos(3.*b)-.0042*sin(3.*b)+.0175*cos(4.*b)-.0059*sin(4.*b)+.0016*cos(5.*b)+.0029*sin(5.*b);
-  w+=.009*sin(2.*a+t*.29+1.3*sin(t*.07))+.007*sin(3.*a-t*.21+2.)+.004*sin(5.*a+t*.43+.7)+.002*sin(7.*a-t*.37+1.1);
-  return w*(1.+.03*sin(6.2831853*t/12.+.7*sin(a+.4)));
-}
-float F(vec2 P){vec2 v=toUV(P);return length(v)-R(atan(v.y,v.x));}
-void main(){
-  float t=uT,px=uPx,S=uGeo.x/900.;
-  vec2 P=gl_FragCoord.xy;
-  vec2 v=toUV(P);
-  float r=length(v),a=atan(v.y,v.x);
-  float rad=R(a),f=r-rad;
-  float g=clamp(length(vec2(F(P+vec2(1.,0.))-f,F(P+vec2(0.,1.))-f)),.4/uGeo.x,1.3/uGeo.x);
-  float dp=f/g;
-  float dp2=(r-rad*(1.+.012*sin(3.*a+t*.37+1.)+.008*sin(6.*a-t*.29)))/g;
-  // 빛나는 구간(천천히 이동)
-  float ph=sin(t*.11),ph2=sin(t*.083+1.);
-  float hUL=glob(a,2.2+.2*ph,.45)*1.2;
-  float hBL=glob(a,-2.18-.15*ph2,.32)*1.1;
-  float hLR=glob(a,-.95+.2*ph2,.30)*1.3;
-  float hR=glob(a,.1-.2*ph,.5)*.08;
-  float hT=glob(a,1.6+.2*ph2,.25)*.15;
-  float trav=0.;
-  float sweep=0.;
-  float Hs=hUL+hBL+hLR+hR+hT;
-  float flick=1.;
-  float H=(.04+Hs*flick+trav+sweep)*1.;
-  // 색
-  float Hgl=(.04+(hUL+hLR+.35*hBL+hR+hT)*flick+trav+.4*sweep)*1.;
-  float Hg=Hgl*Hgl/(Hgl+.25);
-  float warm=smoothstep(-.5,.6,cos(a-2.45+.25*sin(t*.12)));
-  vec3 ec=mix(uC,uW,warm);
-  ec=max(mix(vec3(dot(ec,vec3(.299,.587,.114))),ec,mix(1.4,1.,warm)),0.);
-  ec=mix(ec,uM,.25*(1.-abs(2.*warm-1.)));
-  vec3 hot=mix(ec,vec3(1.,.98,.95),.55*clamp(H-.5,0.,1.));
-  float dn=clamp(-f/rad,0.,1.);
-  float inside=smoothstep(1.,-1.,dp);
-  float din=max(max(-dp,-f*uGeo.x*.9),0.),dout=max(dp,0.);
-  float cw=max(1.0*S,.7*px);   // 테두리 선: 가늘게
-  float core=exp(-pow(dp/cw,2.));
-  float gMid=exp(-abs(dp)/(7.*S));
-  float core2=exp(-pow(dp2/(cw*.8),2.));
-  float gIn=exp(-din/(mix(26.,40.,warm)*S))*inside*(1.-smoothstep(.35,.8,dn));
-  float gOutN=exp(-dout/(8.*S))*(1.-inside);
-  float gOutF=exp(-dout/(32.*S))*(1.-inside);
-  float halo=exp(-dout/(120.*S))*(1.-inside);
-  // 내부: 왼쪽 위 앰버 → 웜 그레이 → 오른쪽 아래 블루, 형태와 함께 흐름
-  vec2 q=v/.278;
-  float sd=dot(q,vec2(-.92,.36))*.85+.16*sin(q.x*1.7+q.y*1.1+t*.21)+.12*sin(q.y*2.3-q.x*.8-t*.16);
-  sd=clamp(sd,-1.,1.);
-  vec3 ic=sd>0.?mix(uM,uW,sd*.8):mix(uM,uC,min(1.,-sd*1.5));
-  float plate=mix(.22,.66,.5+.5*sd)*(1.-.5*(1.-smoothstep(0.,.3,dn))*(1.-warm));
-  vec3 c=ic*plate*inside
-    +mix(ec,vec3(1.,.985,.95),clamp(H*.75,0.,.85))*core*(.04+.95*H)
-    +hot*gMid*.2*Hg
-    +hot*core2*(.01+.12*H)
-    +mix(ec,vec3(.95,.93,.9),.22*warm)*gIn*1.15*Hg*(1.+.3*(1.-warm))
-    +hot*gOutN*.3*Hg*(1.25-.4*warm)
-    +ec*gOutF*.12*Hg*(1.3-.6*warm)
-    +mix(uM,uW,.6)*halo*.45*(.10+.90*lobe(a,3.0,4.))*(.35+.65*min(Hs,1.));
-  float m=max(max(c.r,c.g),c.b);c*=(1.-exp(-m*1.4))/max(m,1e-4);
-  float al=clamp(max(max(c.r,c.g),c.b)*uOp,0.,1.);
-  vec3 o=min(c*uOp,vec3(al));
-  o+=(hh(P)-.5)/255.*step(.002,al);
-  gl_FragColor=vec4(o,al);
-}`;
-  let cv=null,gl=null,U={},op=0,t0=performance.now();
-  let idx=-1,zone=-1,cs=-1e9,ps=-1e9;
-  let from=PAL[0].map(c=>c.slice()),to=PAL[0],cur=PAL[0].map(c=>c.slice());
-  function init(){
-    const hc=document.querySelector(".hero-renderer .hero-canvas");if(!hc)return false;
-    cv=document.createElement("canvas");cv.className="hero-blob";cv.setAttribute("aria-hidden","true");
-    hc.parentElement.insertBefore(cv,hc);
-    gl=cv.getContext("webgl",{alpha:true,premultipliedAlpha:true,antialias:false,powerPreference:"low-power"});
-    if(!gl){cv.remove();cv=null;return true}
-    const sh=(ty,src)=>{const s=gl.createShader(ty);gl.shaderSource(s,src);gl.compileShader(s);return s};
-    const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);
-    if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){cv.remove();cv=null;gl=null;return true}
-    gl.useProgram(pr);
-    const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
-    const loc=gl.getAttribLocation(pr,"p");gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-    for(const n of["uRes","uCtr","uGeo","uT","uPx","uOp","uPulse","uSweep","uW","uM","uC"])U[n]=gl.getUniformLocation(pr,n);
-    gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-    gl.clearColor(0,0,0,0);
-    return true;
-  }
-  const sm=(a,b,x)=>{x=Math.min(1,Math.max(0,(x-a)/(b-a)));return x*x*(3-2*x)};
   const mixv=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k];
-  let dpr=1,W=0,H=0,dead=false;
-  function size(){
-    dpr=Math.min(window.devicePixelRatio||1,1.5);
-    const w=Math.round(cv.clientWidth*dpr),h=Math.round(cv.clientHeight*dpr);
-    if(w!==W||h!==H){W=cv.width=w;H=cv.height=h;gl.viewport(0,0,w,h)}
-  }
-  function frame(now){
-    if(dead)return;
-    requestAnimationFrame(frame);
-    if(!cv||!cv.isConnected){
-      cv=null;gl=null;U={};W=H=0;if(!init())return;if(!cv||!gl){dead=true;return}
-    }
-    const s=(window.__kwangjuyoSeriesProgress||0)*21;
-    const target=sm(0,.6,s)*(1-sm(19.5,20.5,s));
-    op+=(target-op)*.12;
-    if(op<.004){cv.style.visibility="hidden";return}
-    cv.style.visibility="visible";
-    // 전환 시작 → 윤곽 빛이 살짝 강해졌다가 서서히 안정
-    let z=0;for(const m of STARTS)if(s>m)z++;
-    if(z!==zone){if(zone>=0)ps=now;zone=z}
-    const pd=(now-ps)/1000,pulse=sm(0,.35,pd)*(1-sm(.6,2.4,pd));
-    // 텍스처 전환 지점 → 약 1.25초 색 보간
+  let idx=-1,cs=-1e9,from=PAL[0],to=PAL[0],cur=PAL[0];
+  // 테두리 빛이 그려지는 프레임마다 hero-scene.js가 부른다
+  window.__kjyGlowPal=function(){
+    const now=performance.now(),s=(window.__kwangjuyoSeriesProgress||0)*21;
     let k=0;for(const m of MIDS)if(s>m)k++;
-    if(k!==idx){
-      if(idx>=0){from=cur.map(c=>c.slice());cs=now;if(now-ps>2400)ps=now}
-      idx=k;to=PAL[k%PAL.length];
-    }
-    const qq=Math.min(1,(now-cs)/TWEEN),e=qq*qq*(3-2*qq);
-    cur=[0,1,2].map(i=>mixv(from[i],to[i],e));
-    size();
-    const st=sm(.8,1.6,W/H)*.45+1.25,u=Math.min(H,.85*W/(.62*st));
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform2f(U.uRes,W,H);gl.uniform2f(U.uCtr,W*.485,H*.455);gl.uniform2f(U.uGeo,u,st);
-    gl.uniform1f(U.uT,reduced?3:(now-t0)/1000);gl.uniform1f(U.uPx,dpr);gl.uniform1f(U.uOp,op);
-    gl.uniform1f(U.uPulse,0.);gl.uniform1f(U.uSweep,Math.min(1,pd/1.8));
-    gl.uniform3fv(U.uW,cur[0]);gl.uniform3fv(U.uM,cur[1]);gl.uniform3fv(U.uC,cur[2]);
-    gl.drawArrays(gl.TRIANGLES,0,3);
-  }
-  requestAnimationFrame(frame);
+    if(k!==idx){if(idx>=0){from=cur;cs=now}idx=k;to=PAL[k%PAL.length]}
+    const q=Math.min(1,(now-cs)/TWEEN),e=q*q*(3-2*q);
+    return cur=e>=1?to:[0,1,2].map(i=>mixv(from[i],to[i],e));
+  };
 })();
 
 /* ===== 레일 = 스크롤바 =====

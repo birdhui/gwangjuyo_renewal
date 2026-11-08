@@ -1,5 +1,5 @@
 /* tokens.json: original values retained; role extensions documented in docs/prd.md. */
-:root{
+:root{--dotted-line:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 0 4px);
  --color-page:#f7f5f0;--color-canvas:#f3f0e9;--color-text:#2b2721;--color-border:#dad5ca;
  --reference-cream:#ffedd7;--reference-ink:#100904;--reference-muted:#6c5f51;--reference-olive:#445231;--reference-olive-light:#5d6c49;--reference-beige:#f6e0c6;--reference-orange:#dc5000;--reference-brown:#382416;
  --font-ko:'Pretendard',sans-serif;--font-hero:clamp(48px,7vw,112px);--font-section:clamp(18px,3vw,40px);--font-body:clamp(14px,1.5vw,16px);--font-caption:clamp(12px,1.2vw,14px);--font-button:clamp(14px,1.2vw,16px);
@@ -64,7 +64,7 @@ body.story-dark .scene-shadows g{animation-play-state:paused}
 .site-nav{position:fixed;right:calc(var(--page-padding) + 60px);top:14px;left:auto;width:auto;height:auto;padding:0;display:flex;flex-direction:row;gap:22px;background:transparent}
 .site-nav a{font-size:11px;font-weight:600;min-height:32px;border:0;text-decoration:none!important;position:relative;letter-spacing:-.02em}
 /* 현재 메뉴 밑 점선 = oryzo #site-header-line(.o-dashline: 두께 1px, 2px 선·2px 빈칸, 글자 아래 .2em). 위치·너비는 script.js가 옮긴다 */
-.nav-line{position:absolute;left:0;top:0;width:0;height:1px;pointer-events:none;background:repeating-linear-gradient(90deg,currentColor 0 2px,transparent 0 4px)}
+.nav-line{position:absolute;left:0;top:0;width:0;height:1px;pointer-events:none;background:var(--dotted-line)}
 @media(max-width:767px){.nav-line{display:none}}
 .nav-char{display:inline-block;overflow:hidden;vertical-align:top;line-height:1.25}.nav-char-inner{display:block;position:relative;transition:transform .38s cubic-bezier(.22,1,.36,1);transition-delay:calc(var(--char-index)*25ms)}.nav-char-inner::after{content:attr(data-char);position:absolute;top:100%;left:0}.site-nav a:hover .nav-char-inner,.site-nav a:focus-visible .nav-char-inner{transform:translateY(-100%)}
 .site-nav a:hover,.site-nav a:focus-visible{opacity:.78}.site-header .menu-toggle{display:none}

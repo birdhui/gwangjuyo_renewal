@@ -42,7 +42,7 @@ const css=`
 .s3d-wheel{display:block;width:100%;height:auto;overflow:visible;-webkit-mask-image:linear-gradient(90deg,transparent,#000 50%,transparent);mask-image:linear-gradient(90deg,transparent,#000 50%,transparent)}
 .s3d-wheel path{fill:none;stroke:currentColor;stroke-width:.25;stroke-dasharray:1 1;opacity:.6;animation:s3dDash 1s linear infinite}
 .s3d-wheel circle{fill:currentColor}
-.s3d-hand{display:block;width:2em;height:2.35em;margin:1.9em auto 0;opacity:.5}
+.s3d-hand{display:block;width:2em;height:2.35em;margin:1.9em auto 0}
 @keyframes s3dDash{from{stroke-dashoffset:2}to{stroke-dashoffset:0}}
 .s3d-sound{position:absolute;right:max(20px,4vw);bottom:calc(7svh + env(safe-area-inset-bottom,0px));width:44px;height:44px;border:0;background:none;color:#efe9df;padding:8px;cursor:pointer;opacity:0;pointer-events:none}
 .s3d-sound svg{width:100%;height:100%;display:block}

@@ -14,7 +14,11 @@ const d2=new THREE.DirectionalLight(0xffffff,.6);d2.position.set(3,2,3);s.add(d2
 s.add(new THREE.HemisphereLight(0xffffff,0x554433,.5));
 const g=await new GLTFLoader().loadAsync('../../assets/models/sori-60th-doraji.glb');
 let mesh;g.scene.traverse(o=>{if(o.isMesh&&!mesh)mesh=o});
-if(bisque){mesh.material=new THREE.MeshStandardMaterial({color:new THREE.Color(.871,.846,.779).convertSRGBToLinear(),roughness:.85,metalness:0});}
+// 무늬 없는 잔: 히어로 잔에 유약 무늬가 입혀지기 전 색(hero-scene.js의 vec3(.871,.846,.779), 선형)과 같게.
+//   기본 = 유약을 입힌 잔(모델의 노멀·거칠기·클리어코트 그대로, 무늬만 뺌), ?bisque = 초벌 잔(같은 색, 무광)
+const PLAIN=new THREE.Color().setRGB(.871,.846,.779,THREE.LinearSRGBColorSpace);
+if(bisque)mesh.material=new THREE.MeshStandardMaterial({color:PLAIN,roughness:.85,metalness:0});
+else{mesh.material.map=null;mesh.material.color.copy(PLAIN);mesh.material.needsUpdate=true;}
 const grp=new THREE.Group();grp.add(g.scene);s.add(grp);grp.rotation.y=-.35;
 const box=new THREE.Box3().setFromObject(grp),ctr=box.getCenter(new THREE.Vector3()),sz=box.getSize(new THREE.Vector3());
 const cam=new THREE.PerspectiveCamera(24.7,360/480,.05,80);

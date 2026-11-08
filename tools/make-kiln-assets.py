@@ -5,7 +5,7 @@
   mask.png    1/4 크기 보조 지도 — R: 가마 안(아치 입구 안쪽), G: 불길(일렁임·불꽃을 그릴 곳),
               B: 불빛이 닿는 정도(입구에서 멀어질수록 0).
   cup.webp, cup-bisque.webp
-              선반 위 소리잔(유약을 입힌 잔 / 초벌 잔). tools/kiln/cup-sprite.html로
+              선반 위 소리잔(무늬 없이 유약을 입힌 잔 / 초벌 잔). tools/kiln/cup-sprite.html로
               실제 3D 잔(assets/models/sori-60th-doraji.glb)을 투명 배경으로 그린 것을 잘라 줄인다.
 
 사용: python3 tools/make-kiln-assets.py   (opencv-python, numpy, Pillow)
@@ -66,7 +66,7 @@ small = cv2.resize(mask, (W // 4, H // 4), interpolation=cv2.INTER_AREA)
 Image.fromarray((small.clip(0, 1) * 255).astype(np.uint8)).save(OUT / 'mask.png', optimize=True)
 
 # ---------- 소리잔 ----------
-for name, dst in [('cup-glazed.png', 'cup.webp'), ('cup-bisque.png', 'cup-bisque.webp')]:
+for name, dst in [('cup-plain.png', 'cup.webp'), ('cup-bisque.png', 'cup-bisque.webp')]:
     cup = Image.open(SRC / name).convert('RGBA')
     cup = cup.crop(cup.split()[3].getbbox())
     cup = cup.resize((round(cup.width * 300 / cup.height), 300), Image.LANCZOS)

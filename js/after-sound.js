@@ -334,12 +334,17 @@ function init() {
     const bot = document.createElement('p'); bot.className = 'beauty-caption'; bot.innerHTML = '정성껏 빚어낸 한 잔이<br>누군가의 식탁 위에 놓이고,<br>매일의 작은 순간을 함께합니다.';
     beautySticky.append(top, bot);
   }
-  // 제목 글자 크기: 화면 너비의 70%를 차지하도록
+  // 제목 글자 크기: 화면 너비의 62%를 차지하도록. 그 뒤 '100% 수공업 공정 제작'을 제목 글자 왼쪽 끝·바로 위에 맞춘다
+  const titleText = title.querySelector('.beauty-title-muted');
   fitTitle = () => {
-    if (reduced) return;
-    title.style.fontSize = '100px';
-    const w = title.querySelector('.beauty-title-muted').getBoundingClientRect().width || title.scrollWidth || 1;
-    title.style.fontSize = `${(100 * pageWidth * .62 / w).toFixed(2)}px`; // 70% → 62%로 조금 줄임
+    if (!reduced) {
+      title.style.fontSize = '100px';
+      const w = titleText.getBoundingClientRect().width || title.scrollWidth || 1;
+      title.style.fontSize = `${(100 * pageWidth * .62 / w).toFixed(2)}px`;
+    }
+    const box = beautySticky.getBoundingClientRect(), text = titleText.getBoundingClientRect();
+    beautySticky.style.setProperty('--bt-x', `${(text.left - box.left).toFixed(1)}px`);
+    beautySticky.style.setProperty('--bt-y', `${(text.top - box.top).toFixed(1)}px`);
   };
   fitTitle();
   window.addEventListener('resize', () => { fitW = 0; }, { passive: true });
