@@ -203,7 +203,8 @@ const section = document.getElementById('fire');
 const beatsUpdate = createBeats(document.querySelector('#fire .make-stage'), 'fire');
 let target = 0, p = 0;
 const LEAD = -1.0; // 물레 암전과 가마 등장이 끝난 뒤(섹션 위 경계가 화면 위로 1화면 지난 뒤)부터 불이 붙기 시작한다
-const readScroll = () => { const r = section.getBoundingClientRect(), lead = innerHeight * LEAD; target = clamp((-r.top + lead) / (r.height - innerHeight + lead)); };
+const TAIL = +section.dataset.tail || 0;   // 굽기가 끝난 뒤 남는 화면 수: 가마가 사라지고 잔이 소나무 상자에 담기는 구간(glb-shim.js·hero-scene.js)
+const readScroll = () => { const r = section.getBoundingClientRect(), lead = innerHeight * LEAD; target = clamp((-r.top + lead) / (r.height - innerHeight * (1 + TAIL) + lead)); };
 addEventListener('scroll', readScroll, { passive: true }); readScroll();
 const heatOf = q => sm(fit(q, .1, .5)) * (1 - sm(fit(q, .64, .92)));
 const glazeOf = q => sm(fit(q, .4, .6));

@@ -126,7 +126,7 @@ html body #beauty .beauty-marble{filter:none!important;container-type:inline-siz
 @media(min-width:1441px){html body .site-header .brand-image-window,html body .hero-topline{width:calc(max(260px,31vw)*(1 - var(--hero-shrink,0)) + max(84px,7vw)*var(--hero-shrink,0))}}
 /* 가마 장면 임시 복원(기존 베이킹 가마, 타이포 없음): 물레 암전 뒤 가마 중심에서부터 서서히 퍼지며 나타난다 */
 @media(prefers-reduced-motion:no-preference){
-  html body .make-fire{height:500svh}
+  html body .make-fire{height:700svh}   /* 굽기 500svh + 가마에서 나온 잔이 소나무 상자에 담기는 2화면(#fire data-tail) */
   html body .make-fire .make-stage{display:block;opacity:calc(var(--fire-o,0)*var(--fire-k,1)*var(--fire-in,0));-webkit-mask-image:radial-gradient(circle at var(--kx,50%) var(--ky,50%),#000 calc(var(--fire-in,0)*140vmax - 40vmax),transparent calc(var(--fire-in,0)*140vmax));mask-image:radial-gradient(circle at var(--kx,50%) var(--ky,50%),#000 calc(var(--fire-in,0)*140vmax - 40vmax),transparent calc(var(--fire-in,0)*140vmax))}
 }
 /* r26 review: smoother, larger image zoom-in at center (oryzo-like) */

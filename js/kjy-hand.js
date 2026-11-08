@@ -234,7 +234,7 @@ function waitFor(test, ms = 60000) {
 (async () => {
   if (reduced) return;
   const series = document.getElementById('sori-series');
-  if (!series) return;
+  if (!series || series.hidden) return;   // 시리즈 섹션을 숨겨 둔 동안은 손 모델을 받지 않는다
   const D = await waitFor(() => { const d = window.__kwangjuyoDebug; return d && d.cup && d.camera ? d : null; }).catch(() => null);
   if (!D) return;
   let scene = D.cup; while (scene.parent) scene = scene.parent;
