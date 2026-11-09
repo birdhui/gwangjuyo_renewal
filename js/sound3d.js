@@ -25,7 +25,7 @@ const css=`
 .s3d-bg{position:absolute;inset:0;overflow:hidden}
 .s3d-photo,.s3d-table{position:absolute;left:0;top:0;background-size:100% 100%;background-repeat:no-repeat;will-change:transform,filter,opacity;transform-origin:0 0}
 .s3d-photo{background-image:url(img/hero-bg-pine.webp)}
-.s3d-pine{display:block;width:100%;height:100%;visibility:hidden}.s3d-pine.is-on{visibility:visible}
+.s3d-pine{display:block;width:100%;height:100%;visibility:hidden}.s3d-pine.is-on{visibility:inherit}/* inherit: 장면이 꺼지면(.s3d 숨김) 함께 숨는다. visible로 두면 화보 표지에서 처음으로 올라와도 소나무 배경이 히어로를 덮은 채 남았다 */
 .s3d-table{background-image:url(img/sound-table-top.jpg);opacity:0}
 .s3d-shade{position:absolute;inset:0;background:radial-gradient(ellipse 70% 62% at 50% 56%,rgba(0,0,0,0) 0%,rgba(0,0,0,.55) 100%);opacity:0}
 .s3d-gl{position:absolute;inset:0;width:100%;height:100%;display:block}

@@ -119,14 +119,15 @@ const photo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMate
         vec4 hc = texture2D(tCup, cu);
         hc.a *= smoothstep(.08, .25, hc.a);   // 잔만: 잔 둘레의 옅은 바닥 빛(알파 .08 아래)은 히어로 화면이 그대로 비추므로 가져오지 않는다
         float lum = dot(hc.rgb, vec3(.2126, .7152, .0722));
-        vec4 cs = vec4(mix(min(vec3(lum), vec3(.72)) * vec3(1., .94, .85), hc.rgb, uGlaze), hc.a);   // 초벌: 윤기 없는 흙빛
+        vec4 cs = vec4(mix(mix(hc.rgb, vec3(lum) * vec3(1., .95, .88), .5) * .94, hc.rgb, uGlaze), hc.a);   // 초벌: 같은 잔에서 윤기·채도만 조금 덜어 낸 흙빛(유약 잔으로 바뀔 때 색이 크게 튀지 않게)
         vec2 e = uRimE;
         float around = .25 * (texture2D(tCup, cu + vec2(e.x, 0.)).a + texture2D(tCup, cu - vec2(e.x, 0.)).a + texture2D(tCup, cu + vec2(0., e.y)).a + texture2D(tCup, cu - vec2(0., e.y)).a);
         float rim = cs.a * clamp((1. - around) * 1.8, 0., 1.);
-        vec3 light = uFire * heatI * 1.15 + vec3(1., .9, .78) * (.035 * uAmb + .62 * uAfter);
+        vec3 fireL = mix(vec3(dot(uFire, vec3(.2126, .7152, .0722))), uFire, .5);   // 잔에 닿는 불빛은 채도를 반쯤만: 잔 색이 불빛 색으로 통째로 바뀌지 않게
+        vec3 light = fireL * heatI * 1.05 + vec3(1., .93, .84) * (.12 * uAmb + .62 * uAfter);
         vec3 cup = cs.rgb * light
-                 + uFire * heatI * rim * (.15 + 1.1 * smoothstep(.0, .4, M.g) * body)   // 뒤에서 넘실대는 불길이 있는 자리만 윤곽이 달아오른다
-                 + uHot * pow(smoothstep(.5, 1., uHeat), 2.) * (.75 - .2 * uGlaze) * (.25 + .75 * lum) * (.8 + .2 * tongue);
+                 + uFire * heatI * rim * (.1 + .65 * smoothstep(.0, .4, M.g) * body)   // 뒤에서 넘실대는 불길이 있는 자리만 윤곽이 달아오른다
+                 + uHot * pow(smoothstep(.5, 1., uHeat), 2.) * (.3 - .08 * uGlaze) * (.25 + .75 * lum) * (.8 + .2 * tongue);   // 가장 뜨거울 때 잔이 달아오르는 빛도 은은하게
         col = mix(col, mix(cup, hc.rgb, uId), cs.a);
       }
       gl_FragColor = vec4(col, 1.);

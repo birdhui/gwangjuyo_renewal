@@ -137,6 +137,41 @@ function hookAA(r) {
     return render.apply(this, a);
   };
 }
+/* ====================== 1-e. 마우스에 따라 잔이 살짝 기울고 움직임 ======================
+   히어로 다음(rewind~)부터: 히어로 안에서는 히어로 자체 흔들림, 물레에서 깨지기 직전엔 멈춤(조각 위치와 어긋나지 않게).
+   손 모델과 상관없이 히어로 장면이 그려질 때마다 적용한다(시리즈 손이 잔을 쥐면 손도 이 잔을 따라간다).
+   번들이 잔 그룹을 매 프레임 다시 쓰는지 알 수 없으므로, 지난 프레임에 더한 만큼만 되돌린 뒤 새로 더한다. */
+const sway = { grp: null, lastQ: new THREE.Quaternion(), lastP: new THREE.Vector3(), dq: new THREE.Quaternion(), dp: new THREE.Vector3(), has: false, gate: 0, t: 0, mesh: null, box: null };
+const SW_ROT = THREE.MathUtils.degToRad(num('swrot', 4.5)), SW_MOV = num('swmov', 0.012);
+const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _piv = new THREE.Vector3(), _v = new THREE.Vector3(), _inv = new THREE.Quaternion();
+// 흔드는 그룹: 본 잔의 부모(본 잔·시리즈 잔이 함께 든 그룹, 번들이 매 프레임 다시 쓰지 않음), 피벗: 본 잔 중심
+function cupSway(cup) {
+  const g = cup && cup.parent;
+  const now = performance.now(), dt = Math.min(0.05, Math.max(0.001, (now - (sway.t || now)) / 1000)); if (now === sway.t) return; sway.t = now;
+  if (!g || !g.parent) return;
+  if (g !== sway.grp) { sway.grp = g; sway.has = false; sway.mesh = null; cup.traverse(o => { if (!sway.mesh && o.isMesh && o.geometry) sway.mesh = o; }); if (sway.mesh) { sway.mesh.geometry.computeBoundingBox(); sway.box = sway.mesh.geometry.boundingBox; } }
+  if (!sway.mesh) return;
+  const vh = innerHeight, hero = document.getElementById('hero'), clay = document.getElementById('clay');
+  let gate = 1;
+  if (hero) gate *= sm(vh * 0.55, vh * 0.15, hero.getBoundingClientRect().bottom);
+  if (clay) gate *= sm(vh * 0.4, vh * 1.4, clay.getBoundingClientRect().top);
+  gate *= window.__kjySwayGate();
+  sway.gate = damp(sway.gate, reduced ? 0 : gate, 4, dt);
+  const SW = window.__kjySway || { x: 0, y: 0 }, k = sway.gate > 0.001 ? sway.gate : 0, x = SW.x * k, y = SW.y * k;
+  // 이전 프레임에 더한 변화 되돌리기(번들이 그 사이 값을 새로 썼다면 그대로 둠)
+  if (sway.has && g.quaternion.equals(sway.lastQ) && g.position.equals(sway.lastP)) { _inv.copy(sway.dq).invert(); g.quaternion.premultiply(_inv); g.position.sub(sway.dp); }
+  // 피벗 = 잔 중심(그룹 부모 좌표)
+  sway.box.getCenter(_piv); sway.mesh.updateWorldMatrix(true, false); _piv.applyMatrix4(sway.mesh.matrixWorld);
+  g.parent.updateWorldMatrix(true, false); g.parent.worldToLocal(_piv);
+  _e.set(y * SW_ROT * 0.6, x * SW_ROT, -x * SW_ROT * 0.35, 'YXZ'); _q.setFromEuler(_e);
+  _v.copy(g.position).sub(_piv).applyQuaternion(_q).add(_piv);   // 위치: (p - piv)를 회전 + 살짝 이동
+  const mv = SW_MOV * (sway.box.max.y - sway.box.min.y) * sway.mesh.matrixWorld.getMaxScaleOnAxis();
+  sway.dp.copy(_v).sub(g.position); sway.dp.x += x * mv; sway.dp.y -= y * mv * 0.6;
+  sway.dq.copy(_q);
+  g.quaternion.premultiply(_q); g.position.add(sway.dp);
+  sway.lastQ.copy(g.quaternion); sway.lastP.copy(g.position); sway.has = true;
+  g.updateMatrixWorld(true);
+}
 // 손 모델(수 MB)을 다 받기 전부터 히어로 잔이 매끈하게 보이도록, 장면이 생기자마자 렌더러를 잡는다.
 (function aaHook() {
   const d = window.__kwangjuyoDebug;
@@ -144,7 +179,7 @@ function hookAA(r) {
   let sc = d.cup; while (sc.parent) sc = sc.parent;
   const prev = sc.onBeforeRender;
   let n = 0;
-  sc.onBeforeRender = function (renderer, scene, camera) { if (prev) prev.apply(this, arguments); hookAA(renderer); if ((n++ % 20) === 0) footShade(sc); warmScene(renderer, sc, camera); };
+  sc.onBeforeRender = function (renderer, scene, camera) { if (prev) prev.apply(this, arguments); hookAA(renderer); cupSway(d.cup); if ((n++ % 20) === 0) footShade(sc); warmScene(renderer, sc, camera); };
 })();
 /* ====================== 1-d. 미리 올리기·미리 컴파일 ======================
    텍스처는 처음 그려지는 순간 GPU로 올라가고, 재질 셰이더는 처음 보이는 순간 컴파일된다
@@ -439,47 +474,6 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
     });
   }
 
-  // ----- 마우스에 따라 잔이 살짝 기울고 움직임(시리즈 구간에서만; 잔을 쥔 손도 함께) -----
-  // 번들이 잔 그룹을 매 프레임 다시 쓰는지 알 수 없으므로, 지난 프레임에 더한 만큼만 되돌린 뒤 새로 더한다.
-  const sway = { nx: 0, ny: 0, x: 0, y: 0, grp: null, lastQ: new THREE.Quaternion(), lastP: new THREE.Vector3(), dq: new THREE.Quaternion(), dp: new THREE.Vector3(), has: false };
-  addEventListener('pointermove', e => { sway.nx = e.clientX / innerWidth * 2 - 1; sway.ny = e.clientY / innerHeight * 2 - 1; }, { passive: true });
-  const SW_ROT = THREE.MathUtils.degToRad(num('swrot', 4.5)), SW_MOV = num('swmov', 0.012);
-  function swayGroup() {
-    if (sway.grp && sway.grp.parent) return sway.grp;
-    // 모든 잔(본 잔 + 시리즈)을 함께 담는 가장 가까운 공통 부모
-    const ms = cups.map(c => c.mesh).filter(m => m && m.parent); if (mainMesh) ms.unshift(mainMesh);
-    if (!ms.length) return null;
-    const chain = o => { const a = []; for (let p = o.parent; p; p = p.parent) a.push(p); return a; };
-    let common = chain(ms[0]);
-    for (const m of ms.slice(1)) { const c = new Set(chain(m)); common = common.filter(x => c.has(x)); }
-    const g = common.find(x => x.parent) || null;   // 장면 자체는 제외
-    if (g !== sway.grp) sway.has = false;
-    sway.grp = g; return g;
-  }
-  const _q = new THREE.Quaternion(), _e = new THREE.Euler(), _piv = new THREE.Vector3(), _v = new THREE.Vector3(), _inv = new THREE.Quaternion();
-  let swayGate = 0;
-  function applySway(active, dt, camera, gain = 1) {
-    const g = swayGroup(); if (!g || !findMain()) return;
-    const k = active ? 1 : 0;
-    const SW = window.__kjySway || { x: 0, y: 0 }; sway.x = SW.x * k * gain; sway.y = SW.y * k * gain;
-    // 이전 프레임에 더한 변화 되돌리기(번들이 그 사이 값을 새로 썼다면 그대로 둠)
-    if (sway.has && g.quaternion.equals(sway.lastQ) && g.position.equals(sway.lastP)) {
-      _inv.copy(sway.dq).invert(); g.quaternion.premultiply(_inv); g.position.sub(sway.dp);
-    }
-    // 피벗 = 본 잔 중심(그룹 부모 좌표)
-    mainMesh.geometry.boundingBox.getCenter(_piv); mainMesh.updateWorldMatrix(true, false); _piv.applyMatrix4(mainMesh.matrixWorld);
-    if (g.parent) { g.parent.updateWorldMatrix(true, false); g.parent.worldToLocal(_piv); }
-    _e.set(sway.y * SW_ROT * 0.6, sway.x * SW_ROT, -sway.x * SW_ROT * 0.35, 'YXZ'); _q.setFromEuler(_e);
-    // 위치: (p - piv)를 회전 + 살짝 이동
-    _v.copy(g.position).sub(_piv).applyQuaternion(_q).add(_piv);
-    const mv = SW_MOV * (mainBox ? (mainBox.max.y - mainBox.min.y) * mainMesh.matrixWorld.getMaxScaleOnAxis() : 1);
-    sway.dp.copy(_v).sub(g.position).add(new THREE.Vector3(sway.x * mv, -sway.y * mv * 0.6, 0));
-    sway.dq.copy(_q);
-    g.quaternion.premultiply(_q); g.position.add(sway.dp);
-    sway.lastQ.copy(g.quaternion); sway.lastP.copy(g.position); sway.has = true;
-    g.updateMatrixWorld(true);
-  }
-
   // ----- 매 프레임(렌더 직전) -----
   let seriesS = 0, last = performance.now(), inited = false, lastRender = -1;
   const camPos = new THREE.Vector3(), cbase = new THREE.Vector3(), axis = new THREE.Vector3(), q = new THREE.Quaternion(), q2 = new THREE.Quaternion(), off = new THREE.Vector3(), fwd = new THREE.Vector3(), Y = new THREE.Vector3(0, 1, 0), zNow = new THREE.Vector3(), cr = new THREE.Vector3();
@@ -494,15 +488,6 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
     const scR = Math.max(0, +window.__kwangjuyoSceneryR || 0);
     if (!inited || Math.abs(rawS - seriesS) > 0.6) { seriesS = rawS; inited = true; } else seriesS = damp(seriesS, rawS, 11, dt);
     const b = seriesS * 21 + Math.min(1.5, scR) * 2.2;   // 박자(0~21+)
-    {
-      const vh = innerHeight, hero = document.getElementById('hero'), clay = document.getElementById('clay');
-      let g = 1;
-      if (hero) { const hb = hero.getBoundingClientRect().bottom; g *= sm(vh * 0.55, vh * 0.15, hb); }       // 히어로 안에서는 번들 자체 흔들림
-      if (clay) { const ct = clay.getBoundingClientRect().top; g *= sm(vh * 0.4, vh * 1.4, ct); }          // 물레에서 깨지기 직전엔 멈춤(조각 위치와 어긋나지 않게)
-      g *= window.__kjySwayGate();
-      swayGate = damp(swayGate, g, 4, dt);
-      applySway(!reduced && swayGate > 0.001, dt, camera, swayGate);
-    }
     const rise = sm(1.6, 3.4, b);                          // 아래에서 올라옴
     const close = sm(2.7, 4.0, b) - sm(19.0, 20.0, b);     // 쥠 → (시리즈 끝) 폄
     const sink = sm(19.6, 20.9, b);                        // 아래로 사라짐(잔이 풍경 상자 크기로 줄기 전에 끝남 → 작아진 손·팔이 보이지 않게)
