@@ -392,6 +392,8 @@ function stepMarble(dt){
   // 목표: 마우스 위치(좌우 → 좌우, 위아래 → 앞뒤)
   // 화면 기준(좌우·앞뒤)을 잔의 회전만큼 되돌려 잔 안쪽 좌표로
   if(moved){const wx=(px-.5)*2*RR*1.25,wz=(py-.5)*2*RR*.9,f=-cup.rotation.y,c0=Math.cos(f),s0=Math.sin(f);mTarget.set(wx*c0+wz*s0,-wx*s0+wz*c0)}
+  // 목표는 벽 안쪽까지만: 벽 너머를 가리키면 구슬이 벽에 눌린 채 매 프레임 튕겨 '딸깍'이 이어져 삐 소리가 된다(프레임이 느릴수록)
+  if(mTarget.length()>RR)mTarget.setLength(RR);
   const k=38,c=5.2;
   mVel.x+=((mTarget.x-mPos.x)*k-mVel.x*c)*dt;mVel.y+=((mTarget.y-mPos.y)*k-mVel.y*c)*dt;
   mPos.x+=mVel.x*dt;mPos.y+=mVel.y*dt;
