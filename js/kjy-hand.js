@@ -86,20 +86,23 @@ function updateCups() {
 
 /* ====================== 1-b. 3D 캔버스 안티앨리어싱(슈퍼샘플링) ======================
    번들은 dpr를 1~1.25로 제한해 1배 화면에서 잔 외곽이 계단처럼 보인다.
-   → 내부 해상도를 2배(고해상도 화면은 기기 배율 그대로, 최대 2)로 그리고 브라우저가 줄여 표시 = 외곽이 매끈해짐.
+   → 내부 해상도를 기기 배율의 1.5배(최소 2, 최대 3)로 그리고 브라우저가 줄여 표시 = 외곽이 매끈해짐.
    번들이 창 크기 변경 때 배율을 되돌리면 다음 프레임에 다시 맞춘다. 긴 변은 4096px을 넘지 않게. */
 const SSAA = { renderer: null };
 const warm = { pending: false, next: 0, compiled: new WeakSet() };   // 1-d. 미리 올리기·미리 컴파일 상태
 function aaTarget(r) {
   const dpr = window.devicePixelRatio || 1;
-  let t = Q.has('ssaa') ? num('ssaa', 2) : Math.min(3, Math.max(2, dpr));   // 1배 화면은 2배로 그려 줄여 보이고(계단 없음), 고해상도 화면은 기기 배율 그대로(이미 촘촘해 더 키우면 GPU만 무거워져 스크롤이 끊김)
+  let t = Q.has('ssaa') ? num('ssaa', 2) : Math.min(3, Math.max(2, dpr * 1.5));   // 화면 픽셀보다 1.5배(1배 화면은 2배) 촘촘히 그려 줄여 보인다 → 소나무 상자·잔 외곽이 매끈(구슬 소리 장면 sound3d.js와 같은 기준). 느린 기기는 아래 상한이 기기 배율까지 낮춘다
   const el = r.domElement, w = el.clientWidth || innerWidth, h = el.clientHeight || innerHeight;
   t = Math.min(t, 4096 / Math.max(1, w, h), window.__kjyResCap);
   return Math.max(1, t);
 }
 /* 성능에 맞춘 해상도 상한(__kjyResCap): 실제 프레임 간격을 재서 화면이 버벅이면(평균 22ms 넘게 1초 이상) 3D 캔버스 해상도 상한을 한 단계(0.25배)씩 낮춘다.
-   느린 기기에서도 스크롤이 끊기지 않게 하는 것이 우선, 빠른 기기는 그대로 2배(계단 없는 잔 외곽). 히어로 캔버스와 구슬 소리 장면(sound3d.js)이 함께 따른다. */
+   다만 화면의 실제 픽셀 밀도(기기 배율, 최대 2)보다는 낮추지 않는다: 그 아래로 내리면 캔버스가 화면보다 성기게 그려져 늘려 보이므로
+   소나무 상자·잔 외곽이 계단처럼 보인다(예: 175% 배율 노트북에서 1배까지 내려가 있었음).
+   빠른 기기는 그대로 2배 이상(계단 없는 외곽). 히어로 캔버스와 구슬 소리 장면(sound3d.js)이 함께 따른다. */
 window.__kjyResCap = 3;
+const RES_FLOOR = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
 (function governor() {
   let last = 0, ema = 16.7, slowFor = 0, holdUntil = 0;
   (function tick(now) {
@@ -112,8 +115,8 @@ window.__kjyResCap = 3;
     if (slowFor > 1000) {
       const cur = SSAA.renderer ? SSAA.renderer.getPixelRatio() : 2;
       // 해상도를 끝까지 낮춰도 버벅이면, 휠 부드럽게 넘기기(smooth-scroll.js)를 끄고 브라우저 기본 스크롤로 돌린다(메인 스레드가 바빠도 스크롤은 움직이게)
-      if (Math.min(window.__kjyResCap, cur) <= 1) dispatchEvent(new Event('kjy:slow'));
-      window.__kjyResCap = Math.max(1, Math.min(window.__kjyResCap, cur) - 0.25);
+      if (Math.min(window.__kjyResCap, cur) <= RES_FLOOR) dispatchEvent(new Event('kjy:slow'));
+      window.__kjyResCap = Math.max(RES_FLOOR, Math.min(window.__kjyResCap, cur) - 0.25);
       slowFor = 0; holdUntil = now + 1500;                        // 바뀐 해상도가 자리 잡을 때까지 기다렸다 다시 판단
     }
   })(performance.now());
