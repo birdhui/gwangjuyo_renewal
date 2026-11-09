@@ -105,7 +105,10 @@ void main() {`).replace("#include <color_fragment>",`#include <color_fragment>
 function prewarm(){const G=window.__clayGL;if(!G){setTimeout(prewarm,400);return}const{renderer,scene,camera}=G;
 const go=()=>{try{if(!wheel)onRender(renderer,scene,camera)}catch(e){}if(!wheel)return;const vis=[];
 [wheel.root,sys.cupG,sys.dust,sys.haze,sys.pileG].forEach(r=>r&&r.traverse(o=>{vis.push([o,o.visible]);o.visible=true}));
-const done=()=>{for(const[o,v]of vis)o.visible=v;sys.warmed=true};
-try{const p=renderer.compileAsync?renderer.compileAsync(scene,camera):(renderer.compile(scene,camera),Promise.resolve());p.then(done,done)}catch(e){done()}};
+let p;try{p=renderer.compileAsync?renderer.compileAsync(scene,camera):(renderer.compile(scene,camera),Promise.resolve())}catch(e){p=Promise.resolve()}
+/* compileAsync는 부르는 순간 컴파일할 물체를 정하므로 보이기는 바로 되돌린다. 컴파일이 끝날 때까지(실제 GPU는 수백 ms) 두면
+   그동안 물레·흙더미·먼지·안개·물레 쪽 잔이 화면에 그려져, 깨지기 전 물레 화면이 잠깐 바뀌었다 돌아온다(깜빡임) */
+for(const[o,v]of vis)o.visible=v;
+const done=()=>{sys.warmed=true};p.then(done,done)};
 (window.requestIdleCallback||(f=>setTimeout(f,200)))(go,{timeout:1500})}
 const baseOBR=THREE.Scene.prototype.onBeforeRender;THREE.Scene.prototype.onBeforeRender=function(renderer,scene,camera,rt){if(renderer&&renderer.domElement&&renderer.domElement.id==="clay-gl"){try{onRender(renderer,scene,camera);if(sys.cupG&&sys.cupG.parent)sys.cupG.updateMatrixWorld(true)}catch(e){if(!sys.err){sys.err=e;console.warn("[breakwheel]",e)}}}return baseOBR.call(this,renderer,scene,camera,rt)};const block=e=>{if(e.target&&e.target.id==="clay-gl"){e.stopImmediatePropagation();if(e.type==="pointermove")e.target.style.cursor=""}};addEventListener("pointerdown",block,true);addEventListener("pointermove",block,true);(async()=>{try{const t=performance.now();await loadCup();await build();plan();makeObjects();sys.ready=true;sys.ms=performance.now()-t;dispatchEvent(new Event("scroll"));prewarm()}catch(e){sys.err=e;console.warn("[breakwheel]",e)}})();

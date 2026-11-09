@@ -65,7 +65,7 @@ void main() {
    조각이 떨어질 때 물레 화면 카메라가 아래(물레)로 내려가는 움직임을 히어로 카메라에도 똑같이 옮겨, 조각과 먼지가 함께 움직인다.
    조각이 모두 사라진 뒤에는 히어로를 감춘다(배경색은 금이 가는 동안 물레 배경색으로 미리 맞춰 둠). */
 const HB_END=FALL[0]+.97*(FALL[1]-FALL[0]);
-const HB={s:null,last:0};window.__heroBreak=HB;
+const HB={s:null,last:0,on:false,clayAt:-1e9};window.__heroBreak=HB;
 const sysOf=()=>window.__shatter;
 // 물레 화면 쪽 기록: 카메라(깨지기 직전/지금), 잔 위치
 const HC={cam0:new THREE.Matrix4(),camT:new THREE.Matrix4(),cupM:new THREE.Matrix4(),ok0:false,ok:false};
@@ -73,6 +73,14 @@ const HC={cam0:new THREE.Matrix4(),camT:new THREE.Matrix4(),cupM:new THREE.Matri
 function hbUse(){
   const cl=document.getElementById("clay");
   return !!HB.s&&!reduced&&!!cl&&scrollY>=cl.offsetTop-.4*innerHeight&&rawT()<HB_END;
+}
+// 물레 화면이 자기 잔을 숨기는 판단과 히어로 화면을 켜는 판단(html.hb-on)을 같은 순간에 한 번에 한다.
+// 부드러운 스크롤은 rAF 안에서 scrollTo를 하므로 한 프레임 안에서도 앞뒤 콜백이 서로 다른 스크롤 위치를 본다
+// → 따로 판단하면 '물레는 잔을 숨겼는데 히어로는 아직 꺼진' 프레임이 생겨 잔이 잠깐 사라졌다 나타났다(깨지기 직전 깜빡임).
+function hbSync(){
+  const on=hbUse();
+  if(on!==HB.on){hbFrame(null,null);HB.on=on;document.documentElement.classList.toggle("hb-on",on)}   // 거꾸로 올라갈 때도 화면이 바뀌기 전에 잔 상태부터 맞춘다
+  return on;
 }
 function hbBuild(){
   const sys=sysOf(),D=window.__kwangjuyoDebug;if(!D||!D.cup||!sys||!sys.ready||!sys.live||!sys.puff)return null;
@@ -168,7 +176,7 @@ function hbFrame(renderer,camera){
         camera.updateMatrixWorld();
         if(u<=0||!HC.ok0){HC.cam0.copy(camera.matrixWorld);HC.ok0=true}
         HC.camT.copy(camera.matrixWorld);HC.cupM.copy(sys.cupG.matrix);HC.ok=true;
-        if(hbUse())sys.cupG.visible=false;
+        HB.clayAt=performance.now();if(hbSync())sys.cupG.visible=false;
       }
     }catch(e){}}
     return out;
@@ -182,19 +190,14 @@ function hbFrame(renderer,camera){
     +"html.hb-on .hero-darkness{opacity:var(--hb-do,.985)!important;background:var(--hb-bg,#171411)!important}"
     +"html.hb-on .make-clay .make-stage{background-color:transparent!important}";
   document.head.appendChild(st);
-  const R=document.documentElement;let was=false,lastB="";
+  const R=document.documentElement;let lastB="";
   // 히어로 배경(#171411, 불투명도 .985)을 금이 가는 동안 물레 배경(#141110)으로 아주 천천히 맞춘다 → 히어로를 감출 때 배경이 튀지 않음
   const C0=[23,20,17],C1=[20,17,16];
   (function loop(){
     requestAnimationFrame(loop);
     if(!HB.s)HB.s=hbBuild();
-    const on=hbUse();
-    if(on!==was){
-      // Update cup visibility before the DOM layer becomes visible on reverse scroll.
-      hbFrame(null,null);
-      was=on;R.classList.toggle("hb-on",on)
-    }
-    if(on){
+    if(performance.now()-HB.clayAt>100)hbSync();   // 물레 화면이 그리는 동안은 물레 쪽에서 판단(위), 물레가 멈춘 뒤에만 여기서
+    if(HB.on){
       const b=sm(fit(curT(),CRACK[0],FALL[0])),c=C0.map((v,i)=>Math.round(v+(C1[i]-v)*b)).join(","),bk=c+"|"+b.toFixed(3);
       if(bk!==lastB){lastB=bk;R.style.setProperty("--hb-bg","rgb("+c+")");R.style.setProperty("--hb-do",(.985+.015*b).toFixed(4))}
     }

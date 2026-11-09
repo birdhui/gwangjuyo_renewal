@@ -121,16 +121,22 @@ const RES_FLOOR = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
     }
   })(performance.now());
 })();
-(function aaLoop() {
-  const r = SSAA.renderer;
-  if (r) {
-    const t = aaTarget(r);
-    if (Math.abs(r.getPixelRatio() - t) > 0.01) r.setPixelRatio(t);
-    if (!window.__kjyAA) { const gl = r.getContext(); window.__kjyAA = { msaa: gl.getContextAttributes().antialias, samples: gl.getParameter(gl.SAMPLES) }; }
-    window.__kjyAA.ratio = r.getPixelRatio();
-  }
-  requestAnimationFrame(aaLoop);
-})();
+// 해상도는 히어로가 화면에 그리기 바로 직전에 바꾼다: 캔버스 크기를 바꾸는 순간 그림이 지워지므로,
+// 따로(다른 rAF에서) 바꾸면 다시 그려질 때까지 한 프레임 빈 화면이 보인다(잔이 깨지기 직전처럼 무거운 순간 해상도가 내려가며 깜빡임).
+function hookAA(r) {
+  if (SSAA.renderer === r) return;
+  SSAA.renderer = r;
+  const gl = r.getContext();
+  window.__kjyAA = { msaa: gl.getContextAttributes().antialias, samples: gl.getParameter(gl.SAMPLES), ratio: r.getPixelRatio() };
+  const render = r.render;
+  r.render = function (...a) {
+    if (this.getRenderTarget() === null) {
+      const t = aaTarget(this);
+      if (Math.abs(this.getPixelRatio() - t) > 0.01) { this.setPixelRatio(t); window.__kjyAA.ratio = t; }
+    }
+    return render.apply(this, a);
+  };
+}
 // 손 모델(수 MB)을 다 받기 전부터 히어로 잔이 매끈하게 보이도록, 장면이 생기자마자 렌더러를 잡는다.
 (function aaHook() {
   const d = window.__kwangjuyoDebug;
@@ -138,7 +144,7 @@ const RES_FLOOR = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
   let sc = d.cup; while (sc.parent) sc = sc.parent;
   const prev = sc.onBeforeRender;
   let n = 0;
-  sc.onBeforeRender = function (renderer, scene, camera) { if (prev) prev.apply(this, arguments); SSAA.renderer = renderer; if ((n++ % 20) === 0) footShade(sc); warmScene(renderer, sc, camera); };
+  sc.onBeforeRender = function (renderer, scene, camera) { if (prev) prev.apply(this, arguments); hookAA(renderer); if ((n++ % 20) === 0) footShade(sc); warmScene(renderer, sc, camera); };
 })();
 /* ====================== 1-d. 미리 올리기·미리 컴파일 ======================
    텍스처는 처음 그려지는 순간 GPU로 올라가고, 재질 셰이더는 처음 보이는 순간 컴파일된다
@@ -482,7 +488,6 @@ vec3 kjySSS( IncidentLight L, vec3 N, vec3 V, vec3 diff ) {
     if (prevOnBefore) prevOnBefore.apply(this, arguments);
     const now = performance.now(); if (now === lastRender) return; lastRender = now;
     const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000)); last = now;
-    SSAA.renderer = renderer;
     hideOldHand(); findMain(); hookCups(scene); updateCups(); loadHiRes(renderer);
 
     const rawS = clamp01(+window.__kwangjuyoSeriesProgress || 0);
