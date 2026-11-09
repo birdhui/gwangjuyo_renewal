@@ -206,20 +206,24 @@ let ac=null,master=null,rev=null,roll=null,want=true;
 function audio(){
   if(ac)return;ac=new(window.AudioContext||window.webkitAudioContext)();
   master=ac.createGain();master.gain.value=0;master.connect(ac.destination);
+  /* 잔 속 같은 짧은 잔향: 지수로 사라지는 잡음 응답(0.6초)을 그대로 곱한다(ConvolverNode).
+     예전의 지연 두 개 되먹임은 31·47ms가 겹치는 1kHz대(935·1934Hz…)에서 울림이 쌓여, 구슬이 구르거나 부딪힌 뒤 '삐—' 하는 음이 남았다 */
   rev=ac.createGain();rev.gain.value=.35;
-  const d1=ac.createDelay(),d2=ac.createDelay(),f1=ac.createGain(),f2=ac.createGain(),lp=ac.createBiquadFilter();
-  d1.delayTime.value=.031;d2.delayTime.value=.047;f1.gain.value=.42;f2.gain.value=.38;lp.type="lowpass";lp.frequency.value=5200;
-  rev.connect(d1);rev.connect(d2);d1.connect(f1);d2.connect(f2);f1.connect(lp);f2.connect(lp);lp.connect(d1);lp.connect(d2);lp.connect(master);
+  const cv=ac.createConvolver(),il=Math.round(ac.sampleRate*.6),ir=ac.createBuffer(2,il,ac.sampleRate);
+  for(let c=0;c<2;c++){const d=ir.getChannelData(c);let lpS=0;for(let i=0;i<il;i++){lpS+=((Math.random()*2-1)-lpS)*.35;d[i]=lpS*Math.exp(-i/(ac.sampleRate*.11))}}
+  cv.buffer=ir;rev.connect(cv);cv.connect(master);
   const len=ac.sampleRate*2,nb=ac.createBuffer(1,len,ac.sampleRate),ch=nb.getChannelData(0);let b=0;for(let i=0;i<len;i++){b=(b+.02*(Math.random()*2-1))/1.02;ch[i]=b*3.5}
   const src=ac.createBufferSource();src.buffer=nb;src.loop=true;const bp=ac.createBiquadFilter();bp.type="bandpass";bp.frequency.value=820;bp.Q.value=.9;
   roll=ac.createGain();roll.gain.value=0;src.connect(bp);bp.connect(roll);roll.connect(master);roll.connect(rev);src.start();
 }
 const live=()=>!!ac&&ac.state==="running"&&want;
+let lastClink=0;
 function clink(a){
   if(!live()||a<.02)return;
+  const now=performance.now();if(now-lastClink<70)return;lastClink=now;   // 아주 짧은 사이에 거듭 부딪혀도 한 번만(예전 구슬 섹션과 같이): 딸깍이 이어져 음처럼 들리지 않게. 맑은 울림(사인)도 예전 길이의 절반 안팎 — 1초 가까이 남으면 '삐'처럼 들렸다
   const t=ac.currentTime,f0=1900+Math.random()*380,amp=Math.min(1,a)*.5,out=ac.createGain();out.gain.value=1;out.connect(master);out.connect(rev);
-  [[1,1,.9],[2.32,.55,.5],[4.25,.32,.3],[6.63,.16,.18]].forEach(([r,gn,dec])=>{const o=ac.createOscillator(),e=ac.createGain();o.type="sine";o.frequency.value=f0*r*(1+(Math.random()-.5)*.01);e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(amp*gn,t+.002);e.gain.exponentialRampToValueAtTime(.0001,t+dec*(.6+a*.6));o.connect(e);e.connect(out);o.start(t);o.stop(t+dec*1.3+.05)});
-  [[930,.16,1.6],[1710,.09,1.1]].forEach(([f,gn,dec])=>{const o=ac.createOscillator(),e=ac.createGain();o.type="sine";o.frequency.value=f*(1+(Math.random()-.5)*.006);e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(amp*gn,t+.004);e.gain.exponentialRampToValueAtTime(.0001,t+dec);o.connect(e);e.connect(out);o.start(t);o.stop(t+dec+.05)});
+  [[1,1,.45],[2.32,.55,.25],[4.25,.32,.15],[6.63,.16,.09]].forEach(([r,gn,dec])=>{const o=ac.createOscillator(),e=ac.createGain();o.type="sine";o.frequency.value=f0*r*(1+(Math.random()-.5)*.01);e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(amp*gn,t+.002);e.gain.exponentialRampToValueAtTime(.0001,t+dec*(.6+a*.6));o.connect(e);e.connect(out);o.start(t);o.stop(t+dec*1.3+.05)});
+  [[930,.16,.6],[1710,.09,.4]].forEach(([f,gn,dec])=>{const o=ac.createOscillator(),e=ac.createGain();o.type="sine";o.frequency.value=f*(1+(Math.random()-.5)*.006);e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(amp*gn,t+.004);e.gain.exponentialRampToValueAtTime(.0001,t+dec);o.connect(e);e.connect(out);o.start(t);o.stop(t+dec+.05)});
   const n=ac.createBufferSource(),nbuf=ac.createBuffer(1,ac.sampleRate*.02,ac.sampleRate),d=nbuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length)**3;
   const hp=ac.createBiquadFilter();hp.type="highpass";hp.frequency.value=3500;const ng=ac.createGain();ng.gain.value=amp*.5;n.buffer=nbuf;n.connect(hp);hp.connect(ng);ng.connect(out);n.start(t);
 }
