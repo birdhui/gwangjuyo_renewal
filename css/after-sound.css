@@ -140,9 +140,9 @@ body.beauty-light .sc-scroll{color:var(--after-ink,#2a1d17)}
 body.beauty-light .sc-scroll .scroll-icon::before{border-color:currentColor;opacity:calc(.62 * var(--cue-ring-a,0))}
 html:root body .hero-rail.hero-rail{opacity:var(--rail-vis,1)!important}
 html.rail-off .rail-scroll{display:none!important}
-/* 쓰임으로 이어지는 아름다움 — 구슬 크기(화면 높이·너비의 62%) */
-html body #beauty .beauty-marble{width:min(62svh,62vw)!important}
-@media(max-width:767px){html body #beauty .beauty-marble{width:62vw!important}}
+/* 쓰임으로 이어지는 아름다움 — 구슬 크기(화면 높이·너비의 55%) */
+html body #beauty .beauty-marble{width:min(55svh,55vw)!important}
+@media(max-width:767px){html body #beauty .beauty-marble{width:55vw!important}}
 /* 구슬 빛·그림자 — 오른쪽 뒤에서 비추는 역광(참고 사진 실측):
    · 윤곽(::after): 오른쪽 위(시계 방향 10~40°)에서 가장 밝은 가는 빛 선, 오른쪽으로 갈수록 약해지고 왼쪽 절반에는 없다. 바깥 번짐은 반지름의 5~8%까지만.
    · 바닥(::before, 구슬 반지름 r = 상자 너비의 22.3%·높이의 139%, 닿는 점 = 50% 44.4%):
