@@ -443,9 +443,7 @@ addEventListener('resize', resize); resize(); readScroll();
 
 const clock = new THREE.Clock();
 let spin = 0, sCur = 0, sVel = 0, act = 0, passT = 0, built = '', dryCur = 0;
-let live = false, running = false, drawn = false;
-// 물레 화면의 불투명도 = --clay-o (script.js가 html에 적는다, make.css)
-const stageShown = () => (parseFloat(document.documentElement.style.getPropertyValue('--clay-o')) || 0) > 0;
+let live = false, running = false;
 function frame() {
   const dt = Math.min(.05, clock.getDelta()), t = clock.elapsedTime;
   p += (target - p) * (1 - Math.pow(.002, dt));
@@ -573,7 +571,7 @@ function frame() {
   hud(intro && !reduced ? rew : -1);
 
   beatsUpdate(p);
-  if (!drawn || stageShown()) { renderer.render(scene, camera); drawn = true; }   // 물레 화면이 완전히 투명한 동안은 그리지 않는다(첫 프레임은 그림)
+  renderer.render(scene, camera);   // 물레 화면이 투명해도 그린다: 히어로 잔이 깨지는 장면(herobreak.js)이 이 그리기에서 물레 카메라·잔 위치를 받아 간다
   if (live) requestAnimationFrame(frame); else running = false;
 }
 canvas.addEventListener('pointerdown', ev => {
