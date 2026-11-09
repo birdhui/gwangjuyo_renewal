@@ -86,6 +86,9 @@ function init() {
     if (reduced) return;
     galleryTravel = Math.max(0, galleryTrack.scrollWidth - pageWidth);
     set(gallery, '--gallery-height', `${Math.ceil(viewport + galleryTravel)}px`);
+    const first = galleryTrack.firstElementChild, x0 = first.offsetLeft; // 제목(.eg-title) 기준 = 첫 사진: 가로 간격(시차)·너비(글자 크기)
+    set(galleryTrack, '--eg-fw', `${first.offsetWidth}px`);
+    for (const item of galleryTrack.children) set(item, '--eg-off', `${item.offsetLeft - x0}px`);
   }
 
   function sectionProgress(section, y) {

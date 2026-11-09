@@ -52,8 +52,7 @@ body.beauty-light .hero-rail{color:var(--after-ink)}
 .editorial-item.is-landscape{width:72vw}.editorial-item.is-portrait{width:29vw}.editorial-item:first-child{width:62.5vw}
 .editorial-item img{width:100%;height:100%;object-fit:cover;transform:scale(1.055);transition:transform 1.1s cubic-bezier(.2,.65,.2,1)}
 .editorial-item:hover img{transform:scale(1)}
-.editorial-item figcaption{position:absolute;left:5%;top:20%;z-index:1;max-width:90%;font-size:clamp(24px,4.15vw,80px);font-weight:800;line-height:1.15;letter-spacing:-.06em;text-shadow:0 2px 20px rgba(0,0,0,.27)}
-@media(max-width:767px){.beauty-sequence{height:370svh}.beauty-marble{width:60vw;top:41%}.beauty-title{font-size:clamp(25px,6.4vw,50px)}.people-cup-visual{width:76vw;height:55svh;top:49%}.people-heading{left:5vw;top:12svh;max-width:65vw}.people-heading h2{font-size:clamp(26px,7vw,44px)}.people-intro{right:5vw;top:auto;bottom:10svh;width:82vw;font-size:16px}.review-story{padding:8svh 5vw}.reviews-head{grid-template-columns:1fr auto;font-size:12px}.reviews-head p{grid-column:1/-1;grid-row:2;text-align:left}.reviews-head>span{grid-column:2;grid-row:1}.review-card{height:auto;min-height:52svh;grid-template-columns:minmax(0,1fr) minmax(105px,32vw);gap:4vw;padding:5svh 0}.review-copy{grid-column:1}.review-person{font-size:12px}.review-stars{font-size:15px}.review-card blockquote{max-width:none;font-size:clamp(16px,4.2vw,22px)}.review-image{grid-column:2;height:30svh;min-height:170px}.editorial-grid{gap:3vw}.editorial-item{height:76svh}.editorial-item.is-landscape{width:82vw}.editorial-item.is-portrait{width:55vw}.editorial-item:first-child{width:88vw}.editorial-item figcaption{font-size:clamp(22px,6vw,42px)}}
+@media(max-width:767px){.beauty-sequence{height:370svh}.beauty-marble{width:60vw;top:41%}.beauty-title{font-size:clamp(25px,6.4vw,50px)}.people-cup-visual{width:76vw;height:55svh;top:49%}.people-heading{left:5vw;top:12svh;max-width:65vw}.people-heading h2{font-size:clamp(26px,7vw,44px)}.people-intro{right:5vw;top:auto;bottom:10svh;width:82vw;font-size:16px}.review-story{padding:8svh 5vw}.reviews-head{grid-template-columns:1fr auto;font-size:12px}.reviews-head p{grid-column:1/-1;grid-row:2;text-align:left}.reviews-head>span{grid-column:2;grid-row:1}.review-card{height:auto;min-height:52svh;grid-template-columns:minmax(0,1fr) minmax(105px,32vw);gap:4vw;padding:5svh 0}.review-copy{grid-column:1}.review-person{font-size:12px}.review-stars{font-size:15px}.review-card blockquote{max-width:none;font-size:clamp(16px,4.2vw,22px)}.review-image{grid-column:2;height:30svh;min-height:170px}.editorial-grid{gap:3vw}.editorial-item{height:76svh}.editorial-item.is-landscape{width:82vw}.editorial-item.is-portrait{width:55vw}.editorial-item:first-child{width:88vw}}
 @media(prefers-reduced-motion:reduce){.beauty-sequence{height:100svh}.beauty-title,.beauty-marble{opacity:1}.beauty-title{--wipe-mask:linear-gradient(#000,#000)}.beauty-marble{transform:translate3d(8vw,-50%,0)}.review-copy,.review-image{opacity:1;filter:none;transform:none}.editorial-gallery{height:auto}.editorial-sticky{position:relative;height:auto;overflow-x:auto;scroll-snap-type:x mandatory}.editorial-grid{transform:none;will-change:auto}.editorial-item{scroll-snap-align:start}}
 /* 사람들 섹션 소개 글 = 물레 섹션 서브타이틀(.wc-sub)과 같은 글자 크기: 모바일 16px / 768~1599px 24px / 1600px 이상 1.458vw(1920px 28px) */
 @media(prefers-reduced-motion:no-preference),(prefers-reduced-motion:reduce){
@@ -70,33 +69,31 @@ body.beauty-light .hero-rail{color:var(--after-ink)}
    큰 제목은 소리잔 뒤에 놓는다: 잔만 오려 낸 같은 사진(.eg-cut)을 제목 위에 겹침. 작은 글은 잔 위(가장 앞).
    위치는 사진 기준 좌표: 가로 사진은 높이에 맞춰 채워지므로 사진 가로 fx 지점 = 50cqw + (fx-.5)*177.7cqh */
 .editorial-item{container-type:size}
-.eg-cap{position:absolute;inset:0;pointer-events:none;color:var(--hero-ink);font-family:Pretendard,var(--font-ko),sans-serif;text-shadow:var(--hero-ink-shadow)}
-.eg-title{position:absolute;z-index:3;margin:0;font-weight:600;line-height:1.2;letter-spacing:-.06em;white-space:nowrap}
+.eg-cap{position:absolute;inset:0;pointer-events:none}
+.eg-cap,.eg-title{color:var(--hero-ink);font-family:Pretendard,var(--font-ko),sans-serif;text-shadow:var(--hero-ink-shadow)}
+/* 큰 제목: 모든 가로 사진이 첫 사진 '일상에 머무르는 아름다움'과 같은 크기·굵기·자리(가운데, 사진 위쪽)이고,
+   옆으로 넘어갈 때 사진보다 조금 느리게 움직인다. --eg-off(after-sound.js) = 첫 사진과의 가로 간격 → 각 사진이
+   첫 사진이 처음 놓인 자리에 왔을 때 제목이 가운데에 온다. 글자 크기도 첫 사진 기준(--eg-fw = 첫 사진 너비) */
+.eg-title{position:absolute;z-index:3;left:0;right:0;bottom:63.5%;margin:0;font-weight:600;font-size:min(11.4cqh,calc(var(--eg-fw,100cqw)*.096));line-height:1.2;letter-spacing:-.06em;text-align:center;white-space:nowrap;transform:translate3d(calc((var(--gallery-x,0px) + var(--eg-off,0px))*-.3),0,0);will-change:transform}
+@media(prefers-reduced-motion:reduce){.eg-title{transform:none}}
 .eg-note{position:absolute;z-index:5;margin:0;font-weight:500;font-size:max(12px,2.38cqh);line-height:1.35;letter-spacing:-.025em;word-break:keep-all}
 .editorial-item .eg-cut{position:absolute;z-index:4;top:0;left:calc(50cqw - 88.85cqh);width:177.7cqh;height:100cqh;pointer-events:none;transform:scale(var(--kjy-rv-scale,1))}
 .editorial-item .eg-cut img{display:block;width:100%;height:100%;object-fit:fill;transform:none!important}
 .eg-cut--05{clip-path:url(#egc05)}.eg-cut--10{clip-path:url(#egc10)}
 @container (min-aspect-ratio:1.7768){.editorial-item .eg-cut{left:0;width:100cqw;height:56.28cqw;top:calc(50cqh - 28.14cqw)}}
-/* 03 굽 낙인: 오른쪽 위 여백 */
-.eg-cap--03 .eg-title{right:4.63cqh;top:4cqh;font-size:18cqh}
-/* 05 두 잔: 왼쪽 가운데, 회색 잔 굽과 하늘색 잔 사이 여백에 — 첫 글자는 회색 잔 굽 뒤로, 끝 글자는 하늘색 잔 뒤로 살짝 */
-.eg-cap--05 .eg-title{left:calc(50cqw - .232*177.7cqh);top:47cqh;font-size:11.4cqh}
+/* 05 두 잔: 작은 글은 오른쪽 위 */
 .eg-cap--05 .eg-note{right:4.63cqh;top:5cqh;text-align:right}
 /* 06 세로: 왼쪽 아래 작은 글 */
 .eg-cap--06 .eg-note{left:4.63cqh;right:4.63cqh;bottom:5cqh}
-/* 07 실루엣: 위쪽 가운데 */
-.eg-cap--07 .eg-title{left:0;right:0;top:9.26cqh;text-align:center;font-size:min(20.4cqh,15.5cqw)}
+/* 07 실루엣: 작은 글 세 개를 위쪽에 나란히 */
 .eg-cap--07 .eg-note{left:9cqh;right:9cqh;top:5cqh;display:flex;justify-content:space-between;gap:1.5em}
-/* 10 컬렉션: 꽃가지·잔 윗부분 뒤로 제목 아랫부분이 들어간다 */
-.eg-cap--10 .eg-title{left:0;right:0;top:25cqh;text-align:center;font-size:20cqh}
+/* 10 컬렉션: 작은 글은 위쪽 가운데 */
 .eg-cap--10 .eg-note{left:0;right:0;top:15cqh;text-align:center}
 /* 좁은 화면(모바일): 사진 가운데만 보이므로 잔 뒤 배치 대신 위쪽 여백에 */
 @container (max-width:600px){
   .editorial-item .eg-cut{display:none}
-  .eg-cap--03 .eg-title,.eg-cap--05 .eg-title,.eg-cap--07 .eg-title,.eg-cap--10 .eg-title{left:0;right:0;top:18cqh;bottom:auto;text-align:center;font-size:min(14cqh,15cqw)}
   .eg-cap--05 .eg-note,.eg-cap--10 .eg-note{left:7cqw;right:7cqw;top:5cqh;bottom:auto;text-align:center}
   .eg-cap--07 .eg-note{left:7cqw;right:7cqw;flex-direction:column;align-items:center;gap:.35em}
-  .eg-cap--03 .eg-title{top:6cqh}
 }
 /* 갤러리 높이 축소: 사진 높이 72 → 64svh(너비도 같은 비율) */
 @media(min-width:768px){
@@ -105,8 +102,6 @@ body.beauty-light .hero-rail{color:var(--after-ink)}
   #gallery .editorial-item.is-portrait{width:23.2vw!important}
   #gallery .editorial-item:first-child{width:50vw!important}
 }
-/* 첫 번째 사진 제목: 다른 사진 제목(.eg-title)과 같은 색(hero 글자 색)·굵기·자간, 크기는 '한 손의 무게'와 같은 11.4cqh */
-#gallery .editorial-item figcaption{color:var(--hero-ink);font-family:Pretendard,var(--font-ko),sans-serif;font-weight:600;font-size:min(11.4cqh,9.6cqw);line-height:1.2;letter-spacing:-.06em;text-shadow:var(--hero-ink-shadow)}
 /* 갤러리 스크롤 아이콘: 갤러리에 들어오면 아래 가운데에 서서히 나타난다(oryzo와 같이) */
 .eg-scroll{position:absolute;left:50%;bottom:22px;z-index:8;transform:translateX(-50%);display:flex;align-items:center;gap:8px;min-height:44px;color:#f7f1e6;font-size:13px;font-weight:600;white-space:nowrap;visibility:hidden;pointer-events:none}
 .eg-scroll .scroll-icon::before{scale:var(--cue-ring,.5);opacity:var(--cue-ring-a,0)}
@@ -126,7 +121,7 @@ html body #beauty .beauty-marble{filter:none!important;container-type:inline-siz
 @media(min-width:1441px){html body .site-header .brand-image-window,html body .hero-topline{width:calc(max(260px,31vw)*(1 - var(--hero-shrink,0)) + max(84px,7vw)*var(--hero-shrink,0))}}
 /* 가마 장면 임시 복원(기존 베이킹 가마, 타이포 없음): 물레 암전 뒤 가마 중심에서부터 서서히 퍼지며 나타난다 */
 @media(prefers-reduced-motion:no-preference){
-  html body .make-fire{height:700svh}   /* 굽기 500svh + 가마에서 나온 잔이 소나무 상자에 담기는 2화면(#fire data-tail) */
+  html body .make-fire{height:850svh}   /* 굽기 650svh + 가마에서 나온 잔이 소나무 상자에 담기는 2화면(#fire data-tail) */
   html body .make-fire .make-stage{display:block;opacity:calc(var(--fire-o,0)*var(--fire-k,1)*var(--fire-in,0));-webkit-mask-image:radial-gradient(circle at var(--kx,50%) var(--ky,50%),#000 calc(var(--fire-in,0)*140vmax - 40vmax),transparent calc(var(--fire-in,0)*140vmax));mask-image:radial-gradient(circle at var(--kx,50%) var(--ky,50%),#000 calc(var(--fire-in,0)*140vmax - 40vmax),transparent calc(var(--fire-in,0)*140vmax))}
 }
 /* r26 review: smoother, larger image zoom-in at center (oryzo-like) */

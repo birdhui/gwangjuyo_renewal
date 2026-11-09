@@ -4,7 +4,8 @@ import { createBeats } from './beats.js';
 //  - 바탕은 불이 한창일 때의 사진 그대로. 불이 약할 때는 가마 안을 어둡게, 몸체는 달빛 정도로 낮추고,
 //    불빛이 닿는 정도(mask.png B)만큼 불의 세기·일렁임을 따라 밝아진다.
 //  - 가마 안 불길(mask.png G)은 위로 흐르는 잡음으로 살짝 밀려 그려지고, 혀처럼 솟는 밝기 변화가 더해져 일렁인다.
-//  - 선반 위 소리잔 하나: 초벌 → 유약(시유) 잔으로 바뀌고, 가장 뜨거울 때는 잔 자체가 불빛처럼 달아오른다.
+//  - 선반 위 소리잔 하나: 히어로의 3D 잔을 그대로 옮겨 그린다(가마가 사라진 뒤 소나무 상자에 담기는 바로 그 잔).
+//    초벌 → 유약(시유) 잔으로 바뀌고, 가장 뜨거울 때는 잔 자체가 불빛처럼 달아오른다.
 //  - 장작 불티: 가마 안에서 솟는 불티, 입구 밖으로 튀는 불티, 굴뚝 위로 날리는 불티(모두 화면 GPU 점, 상태 없이 시간으로 계산).
 import * as THREE from 'three';
 import { createRenderer } from './shared-gl.js';
@@ -45,14 +46,36 @@ const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 // ---------- 가마 사진 ----------
 const loader = new THREE.TextureLoader();
 const load = (u, srgb) => new Promise(res => loader.load(u, t => { t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.generateMipmaps = false; t.minFilter = t.magFilter = THREE.LinearFilter; res(t); }));
-const [tP, tM, tC, tCB] = await Promise.all([load('img/kiln/plate.webp', true), load('img/kiln/mask.png', false), load('img/kiln/cup.webp', true), load('img/kiln/cup-bisque.webp', true)]);
+const [tP, tM] = await Promise.all([load('img/kiln/plate.webp', true), load('img/kiln/mask.png', false)]);
+// 가마 속 잔 = 히어로 3D 잔: 히어로가 그린 직후(그림판이 지워지기 전) 잔 둘레만 잘라 온다.
+// 가마가 사라질 때 아래의 히어로 잔과 같은 그림이 되므로 두 잔이 겹쳐 보이는 잔상이 없다.
+const cupCv = document.createElement('canvas'), cupCtx = cupCv.getContext('2d');
+cupCv.width = cupCv.height = 512;   // 크기 고정(텍스처 저장 공간은 처음 크기로 정해진다): 잘라 온 정사각을 이 크기로 늘이거나 줄여 담는다
+const tCup = new THREE.CanvasTexture(cupCv);
+tCup.colorSpace = THREE.SRGBColorSpace; tCup.generateMipmaps = false; tCup.minFilter = tCup.magFilter = THREE.LinearFilter;
+const heroEl = () => window.__kjyHeroGL?.domElement;
+const CROP = 2.2;   // 잘라 오는 정사각 한 변 = 잔 높이의 2.2배(윤곽 빛을 찾는 거리 uRimE도 이 기준)
+const crop = { x: 0, y: 0, s: 1, k: 1, hx: 0, hy: 0, on: false };   // 화면 px의 정사각 자르기, k = 히어로 그림판 px / 화면 px
+let hooked = null;
+function hookHero() {
+  const gl = window.__kjyHeroGL; if (!gl || hooked === gl) return; hooked = gl;
+  const render = gl.render;
+  gl.render = function (...a) {
+    render.apply(this, a);
+    if (!crop.on) return;
+    const w = cupCv.width, sw = crop.s * crop.k;
+    cupCtx.clearRect(0, 0, w, w);
+    cupCtx.drawImage(this.domElement, (crop.x - crop.hx) * crop.k, (crop.y - crop.hy) * crop.k, sw, sw, 0, 0, w, w);
+    tCup.needsUpdate = true;
+  };
+}
 const QUAD_VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }';
 const NOISE = `
   float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
   float fbm(vec2 p){ float s = 0., a = .5; for (int i = 0; i < 4; i++) { s += a * n(p); p = p * 2.03 + 1.7; a *= .5; } return s; }`;
 const U = {
-  tP: { value: tP }, tM: { value: tM }, tC: { value: tC }, tCB: { value: tCB },
+  tP: { value: tP }, tM: { value: tM }, tCup: { value: tCup }, uCrop: { value: new THREE.Vector4() }, uRimE: { value: new THREE.Vector2(.03 * CUP_W / CUP_PX.h / CROP, .022 / CROP) }, uId: { value: 0 },
   uT: { value: 0 }, uHeat: { value: 0 }, uFlick: { value: 1 }, uGlaze: { value: 0 }, uAfter: { value: 0 }, uAmb: { value: 1 },
   uFire: { value: new THREE.Color() }, uHot: { value: new THREE.Color() }, uCup: { value: new THREE.Vector4(...CUP) },
 };
@@ -61,7 +84,7 @@ const photo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMate
   vertexShader: QUAD_VS,
   fragmentShader: `
     varying vec2 vUv;
-    uniform sampler2D tP, tM, tC, tCB; uniform float uT, uHeat, uFlick, uGlaze, uAfter, uAmb; uniform vec3 uFire, uHot; uniform vec4 uCup;
+    uniform sampler2D tP, tM, tCup; uniform float uT, uHeat, uFlick, uGlaze, uAfter, uAmb, uId; uniform vec3 uFire, uHot; uniform vec4 uCup, uCrop; uniform vec2 uRimE;
     ${NOISE}
     void main(){
       vec3 M = texture2D(tM, vUv).rgb;                       // R 가마 안, G 불길, B 불빛이 닿는 정도
@@ -89,19 +112,22 @@ const photo = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMate
       vec3 lit = c0 * mix(1., uFlick, L);
       vec3 outside = mix(cold, lit, clamp(uHeat * 1.2, 0., 1.)) + c0 * .2 * uAfter * L;
       vec3 col = mix(outside, interior, M.r);
-      // 선반 위 소리잔: 초벌 → 유약 잔. 불빛을 받고, 뒤의 불길이 윤곽을 감싸며(역광), 가장 뜨거울 때는 잔 자체가 달아오른다
-      vec2 cu = (vUv - uCup.xy) / uCup.zw;
+      // 선반 위 소리잔(히어로 3D 잔, 화면 자리로 찾음): 초벌 → 유약 잔. 불빛을 받고, 뒤의 불길이 윤곽을 감싸며(역광),
+      // 가장 뜨거울 때는 잔 자체가 달아오른다. 굽기가 끝나면(uId → 1) 히어로 잔 그림 그대로가 된다
+      vec2 cu = uCrop.xz * gl_FragCoord.xy + uCrop.yw;
       if (cu.x > 0. && cu.x < 1. && cu.y > 0. && cu.y < 1.) {
-        vec4 cs = mix(texture2D(tCB, cu), texture2D(tC, cu), uGlaze);
-        vec2 e = vec2(.03, .022);
-        float around = .25 * (texture2D(tCB, cu + vec2(e.x, 0.)).a + texture2D(tCB, cu - vec2(e.x, 0.)).a + texture2D(tCB, cu + vec2(0., e.y)).a + texture2D(tCB, cu - vec2(0., e.y)).a);
+        vec4 hc = texture2D(tCup, cu);
+        hc.a *= smoothstep(.08, .25, hc.a);   // 잔만: 잔 둘레의 옅은 바닥 빛(알파 .08 아래)은 히어로 화면이 그대로 비추므로 가져오지 않는다
+        float lum = dot(hc.rgb, vec3(.2126, .7152, .0722));
+        vec4 cs = vec4(mix(min(vec3(lum), vec3(.72)) * vec3(1., .94, .85), hc.rgb, uGlaze), hc.a);   // 초벌: 윤기 없는 흙빛
+        vec2 e = uRimE;
+        float around = .25 * (texture2D(tCup, cu + vec2(e.x, 0.)).a + texture2D(tCup, cu - vec2(e.x, 0.)).a + texture2D(tCup, cu + vec2(0., e.y)).a + texture2D(tCup, cu - vec2(0., e.y)).a);
         float rim = cs.a * clamp((1. - around) * 1.8, 0., 1.);
-        float lum = dot(cs.rgb, vec3(.2126, .7152, .0722));
         vec3 light = uFire * heatI * 1.15 + vec3(1., .9, .78) * (.035 * uAmb + .62 * uAfter);
         vec3 cup = cs.rgb * light
                  + uFire * heatI * rim * (.15 + 1.1 * smoothstep(.0, .4, M.g) * body)   // 뒤에서 넘실대는 불길이 있는 자리만 윤곽이 달아오른다
                  + uHot * pow(smoothstep(.5, 1., uHeat), 2.) * (.75 - .2 * uGlaze) * (.25 + .75 * lum) * (.8 + .2 * tongue);
-        col = mix(col, cup, cs.a);
+        col = mix(col, mix(cup, hc.rgb, uId), cs.a);
       }
       gl_FragColor = vec4(col, 1.);
     }`,
@@ -192,11 +218,22 @@ function place() {
   SU.uXf.value.set(sx, sy, ox, oy); SU.uPx.value = renderer.getPixelRatio() * Math.max(1, ih / 900);
   const toScreen = (u, v) => [((u - .5) * 2 * sx + ox) * .5 * iw + iw / 2, ih / 2 - ((v - .5) * 2 * sy + oy) * .5 * ih];
   { const [kx, ky] = toScreen(MOUTH[0], MOUTH[1]), st = document.querySelector('#fire .make-stage'); if (st) { st.style.setProperty('--kx', `${kx.toFixed(1)}px`); st.style.setProperty('--ky', `${ky.toFixed(1)}px`); } } // 등장 때 가마 입구에서부터 퍼지며 나타난다
-  // 선반 위 소리잔의 화면 자리·높이: 시리즈의 3D 잔이 여기서부터 커진다(hero-scene.js)
+  // 선반 위 소리잔의 화면 자리·높이(가마 그림 기준): 히어로 3D 잔이 이 자리에 앉는다(hero-scene.js), 흔들림은 frame()에서 더한다
   const [cx, cy] = toScreen(CUP[0] + CUP[2] / 2, CUP[1] + CUP[3] / 2);
-  window.__fireCup = { x: cx, y: cy, h: CUP[3] * 2 * sy * .5 * ih };
+  cupAt.x = cx; cupAt.y = cy; cupAt.h = CUP[3] * 2 * sy * .5 * ih;
 }
-function resize() { const pr = sceneDpr(); renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false); composer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight); grade.uniforms.uRes.value.set(innerWidth * pr, innerHeight * pr); place(); }
+const cupAt = { x: 0, y: 0, h: 0 }, fireCup = window.__fireCup = { x: 0, y: 0, h: 0 };
+// 가마 그림판의 흔들림(translate·scale, 화면 가운데 기준)을 잔 자리와 잘라 오기 좌표에 같이 적용한다
+function placeCup(S, tx, ty) {
+  const iw = innerWidth, ih = innerHeight, pr = renderer.getPixelRatio();
+  fireCup.x = iw / 2 + S * (cupAt.x - iw / 2) + tx; fireCup.y = ih / 2 + S * (cupAt.y - ih / 2) + ty; fireCup.h = S * cupAt.h;
+  const s = crop.s = CROP * fireCup.h; crop.x = fireCup.x - s / 2; crop.y = fireCup.y - s / 2;
+  const el = heroEl();
+  if (el) { const r = el.getBoundingClientRect(); crop.hx = r.left; crop.hy = r.top; crop.k = r.width ? el.width / r.width : 1; }
+  // 가마 그림판 px(gl_FragCoord, 아래가 0) → 자른 그림 uv
+  U.uCrop.value.set(S / (pr * s), (iw / 2 * (1 - S) + tx - crop.x) / s, S / (pr * s), 1 - (ih / 2 * (1 + S) + ty - crop.y) / s);
+}
+function resize() { const pr = sceneDpr(); renderer.setPixelRatio(pr); renderer.setSize(innerWidth, innerHeight, false); composer.setPixelRatio(pr); composer.setSize(innerWidth, innerHeight); grade.uniforms.uRes.value.set(innerWidth * pr, innerHeight * pr); place(); placeCup(1, 0, 0); }
 addEventListener('resize', resize); resize();
 
 // ---------- 스크롤 → 목표 온도; 가마는 열의 관성으로 따라간다 ----------
@@ -231,13 +268,19 @@ function frame() {
   U.uT.value = reduced ? 0 : t; U.uHeat.value = heat; U.uFlick.value = flick; U.uGlaze.value = glaze; U.uAfter.value = after;
   U.uAmb.value = 1 - .6 * sm(fit(heat, .05, .5));   // 불이 세지면 달빛 바탕은 불빛에 묻힌다
   const glow = Math.pow(heat, 2);
-  bloom.strength = .18 + .42 * glow; bloom.threshold = .86 - .1 * glow;
+  const id = sm(fit(window.__kjyKilnU ?? -9, -.5, 0));   // 굽기 끝 → 가마가 사라지기 전: 가마 속 잔이 히어로 잔 그림 그대로가 된다
+  U.uId.value = id;
+  bloom.strength = (.18 + .42 * glow) * (1 - id); bloom.threshold = .86 - .1 * glow;
   grade.uniforms.uTime.value = t;
-  { const SW = window.__kjySway; if (SW && !reduced) { const tx = (SW.x * 9).toFixed(1), ty = (SW.y * 5).toFixed(1); const v = `translate3d(${tx}px,${ty}px,0) scale(1.02)`; if (canvas.style.transform !== v) canvas.style.transform = v; } } // 가마도 마우스를 따라 아주 살짝
+  { const SW = window.__kjySway, on = SW && !reduced, tx = on ? +(SW.x * 9).toFixed(1) : 0, ty = on ? +(SW.y * 5).toFixed(1) : 0;   // 가마도 마우스를 따라 아주 살짝
+    if (on) { const v = `translate3d(${tx}px,${ty}px,0) scale(1.02)`; if (canvas.style.transform !== v) canvas.style.transform = v; }
+    placeCup(on ? 1.02 : 1, tx, ty); }
 
   beatsUpdate(p);
-  if (!warmed || stageShown()) { composer.render(dt); warmed = true; }   // 첫 프레임은 셰이더 준비를 위해 그리고, 그 뒤 가마 화면이 완전히 투명한 동안(등장 전·사라진 뒤)은 그리지 않는다
-  if (live && !STILL) requestAnimationFrame(frame); else running = false;
+  const shown = stageShown();
+  hookHero(); crop.on = shown;
+  if (!warmed || shown) { composer.render(dt); warmed = true; }   // 첫 프레임은 셰이더 준비를 위해 그리고, 그 뒤 가마 화면이 완전히 투명한 동안(등장 전·사라진 뒤)은 그리지 않는다
+  if (live && !STILL) requestAnimationFrame(frame); else { running = false; crop.on = false; }
 }
 frame(); canvas.classList.add('ready');
 new IntersectionObserver(([e]) => { live = e.isIntersecting; if (live && !running && !STILL) { running = true; clock.getDelta(); requestAnimationFrame(frame); } }, { rootMargin: '100% 0px 100% 0px' }).observe(section);
