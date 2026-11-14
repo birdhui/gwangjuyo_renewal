@@ -83,8 +83,6 @@ body.beauty-light .hero-rail{color:var(--after-ink)}
 @container (min-aspect-ratio:1.7768){.editorial-item .eg-cut{left:0;width:100cqw;height:56.28cqw;top:calc(50cqh - 28.14cqw)}}
 /* 05 두 잔: 작은 글은 오른쪽 위 */
 .eg-cap--05 .eg-note{right:4.63cqh;top:5cqh;text-align:right}
-/* 06 세로: 왼쪽 아래 작은 글 */
-.eg-cap--06 .eg-note{left:4.63cqh;right:4.63cqh;bottom:5cqh}
 /* 07 실루엣: 작은 글 세 개를 위쪽에 나란히 */
 .eg-cap--07 .eg-note{left:9cqh;right:9cqh;top:5cqh;display:flex;justify-content:space-between;gap:1.5em}
 /* 10 컬렉션: 작은 글은 위쪽 가운데 */
