@@ -2,7 +2,6 @@
   타이틀 사진 자리
   - docs/readme/cover.jpg 파일을 원하는 사진으로 바꾸면 됩니다(같은 이름으로 덮어쓰기).
   - 권장 크기: 가로 2400 × 세로 1260px(2:1 안팎), JPG 또는 WebP
-  - 지금은 공유 이미지(img/og-image.jpg)를 임시로 넣어 두었습니다.
 -->
 <p align="center">
   <img src="docs/readme/cover.jpg" alt="광주요 리뉴얼 — 원목 탁자 위 백자 도라지문 소리잔" width="100%">
